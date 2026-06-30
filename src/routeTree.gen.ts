@@ -9,38 +9,137 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedListaRouteImport } from './routes/_authenticated/lista'
+import { Route as AuthenticatedImportacaoRouteImport } from './routes/_authenticated/importacao'
+import { Route as AuthenticatedConsultaRouteImport } from './routes/_authenticated/consulta'
+import { Route as AuthenticatedCarometroRouteImport } from './routes/_authenticated/carometro'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedListaRoute = AuthenticatedListaRouteImport.update({
+  id: '/lista',
+  path: '/lista',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportacaoRoute = AuthenticatedImportacaoRouteImport.update({
+  id: '/importacao',
+  path: '/importacao',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedConsultaRoute = AuthenticatedConsultaRouteImport.update({
+  id: '/consulta',
+  path: '/consulta',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCarometroRoute = AuthenticatedCarometroRouteImport.update({
+  id: '/carometro',
+  path: '/carometro',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/carometro': typeof AuthenticatedCarometroRoute
+  '/consulta': typeof AuthenticatedConsultaRoute
+  '/importacao': typeof AuthenticatedImportacaoRoute
+  '/lista': typeof AuthenticatedListaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/carometro': typeof AuthenticatedCarometroRoute
+  '/consulta': typeof AuthenticatedConsultaRoute
+  '/importacao': typeof AuthenticatedImportacaoRoute
+  '/lista': typeof AuthenticatedListaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/carometro': typeof AuthenticatedCarometroRoute
+  '/_authenticated/consulta': typeof AuthenticatedConsultaRoute
+  '/_authenticated/importacao': typeof AuthenticatedImportacaoRoute
+  '/_authenticated/lista': typeof AuthenticatedListaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/admin'
+    | '/carometro'
+    | '/consulta'
+    | '/importacao'
+    | '/lista'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/admin'
+    | '/carometro'
+    | '/consulta'
+    | '/importacao'
+    | '/lista'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/admin'
+    | '/_authenticated/carometro'
+    | '/_authenticated/consulta'
+    | '/_authenticated/importacao'
+    | '/_authenticated/lista'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +147,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/lista': {
+      id: '/_authenticated/lista'
+      path: '/lista'
+      fullPath: '/lista'
+      preLoaderRoute: typeof AuthenticatedListaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/importacao': {
+      id: '/_authenticated/importacao'
+      path: '/importacao'
+      fullPath: '/importacao'
+      preLoaderRoute: typeof AuthenticatedImportacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/consulta': {
+      id: '/_authenticated/consulta'
+      path: '/consulta'
+      fullPath: '/consulta'
+      preLoaderRoute: typeof AuthenticatedConsultaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/carometro': {
+      id: '/_authenticated/carometro'
+      path: '/carometro'
+      fullPath: '/carometro'
+      preLoaderRoute: typeof AuthenticatedCarometroRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedCarometroRoute: typeof AuthenticatedCarometroRoute
+  AuthenticatedConsultaRoute: typeof AuthenticatedConsultaRoute
+  AuthenticatedImportacaoRoute: typeof AuthenticatedImportacaoRoute
+  AuthenticatedListaRoute: typeof AuthenticatedListaRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedCarometroRoute: AuthenticatedCarometroRoute,
+  AuthenticatedConsultaRoute: AuthenticatedConsultaRoute,
+  AuthenticatedImportacaoRoute: AuthenticatedImportacaoRoute,
+  AuthenticatedListaRoute: AuthenticatedListaRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

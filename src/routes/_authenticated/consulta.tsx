@@ -10,7 +10,7 @@ import {
   SALAS, COMPONENTES_LABEL, STATUS_LABEL, projecao,
   gradeClass, statusBadgeClass, formatNota, formatFreq, type Etapa,
 } from "@/lib/sistema";
-import { Printer, RefreshCw, Map, IdCard, ArrowRight, User } from "lucide-react";
+import { Printer, RefreshCw, Map as MapIcon, IdCard, ArrowRight, User } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/consulta")({
