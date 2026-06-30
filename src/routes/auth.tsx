@@ -18,12 +18,14 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
 
   useEffect(() => {
+    setMounted(true);
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/consulta", replace: true });
     });
@@ -62,6 +64,14 @@ function AuthPage() {
     if (result.redirected) return;
     navigate({ to: "/consulta", replace: true });
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-header text-header-foreground flex items-center justify-center p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-header text-header-foreground flex items-center justify-center p-4">
