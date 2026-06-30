@@ -65,6 +65,14 @@ function AuthPage() {
     navigate({ to: "/consulta", replace: true });
   };
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-header text-header-foreground flex items-center justify-center p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-header text-header-foreground flex items-center justify-center p-4">
       <div className="w-full max-w-md">
