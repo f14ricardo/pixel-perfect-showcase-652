@@ -14,16 +14,210 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alunos: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          data_nascimento: string | null
+          email: string | null
+          foto_url: string | null
+          id: string
+          matricula: string | null
+          nome: string
+          sala: string
+          sexo: string | null
+          status_aluno: Database["public"]["Enums"]["status_aluno"]
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          foto_url?: string | null
+          id?: string
+          matricula?: string | null
+          nome: string
+          sala: string
+          sexo?: string | null
+          status_aluno?: Database["public"]["Enums"]["status_aluno"]
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          foto_url?: string | null
+          id?: string
+          matricula?: string | null
+          nome?: string
+          sala?: string
+          sexo?: string | null
+          status_aluno?: Database["public"]["Enums"]["status_aluno"]
+        }
+        Relationships: []
+      }
+      configuracoes_salas: {
+        Row: {
+          componente: string
+          id: string
+          ordem: number
+          sala: string
+        }
+        Insert: {
+          componente: string
+          id?: string
+          ordem?: number
+          sala: string
+        }
+        Update: {
+          componente?: string
+          id?: string
+          ordem?: number
+          sala?: string
+        }
+        Relationships: []
+      }
+      frequencias: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          freq1: number | null
+          freq2: number | null
+          freq3: number | null
+          id: string
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          freq1?: number | null
+          freq2?: number | null
+          freq3?: number | null
+          id?: string
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          freq1?: number | null
+          freq2?: number | null
+          freq3?: number | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frequencias_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: true
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notas: {
+        Row: {
+          aluno_id: string
+          componente: string
+          created_at: string
+          id: string
+          nota_etapa_1: number | null
+          nota_etapa_2: number | null
+          nota_etapa_3: number | null
+          sala: string
+        }
+        Insert: {
+          aluno_id: string
+          componente: string
+          created_at?: string
+          id?: string
+          nota_etapa_1?: number | null
+          nota_etapa_2?: number | null
+          nota_etapa_3?: number | null
+          sala: string
+        }
+        Update: {
+          aluno_id?: string
+          componente?: string
+          created_at?: string
+          id?: string
+          nota_etapa_1?: number | null
+          nota_etapa_2?: number | null
+          nota_etapa_3?: number | null
+          sala?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "coordenacao" | "professor" | "consulta"
+      status_aluno: "AT" | "TR" | "RE"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +344,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "coordenacao", "professor", "consulta"],
+      status_aluno: ["AT", "TR", "RE"],
+    },
   },
 } as const
