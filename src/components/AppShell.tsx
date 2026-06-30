@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import sesiLogo from "@/assets/sesi-sp.svg.asset.json";
 import { useQueryClient } from "@tanstack/react-query";
 
-const nav = [
+type NavItem = { to: string; label: string; icon: typeof Users; adminOnly?: boolean };
+const nav: NavItem[] = [
   { to: "/consulta", label: "Consulta", icon: Users },
   { to: "/lista", label: "Lista Geral", icon: ListChecks },
   { to: "/carometro", label: "Carômetro", icon: IdCard },
   { to: "/importacao", label: "Importação", icon: Upload, adminOnly: true },
   { to: "/admin", label: "Usuários", icon: Shield, adminOnly: true },
-] as const;
+];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isAdmin, roles } = useAuth();
