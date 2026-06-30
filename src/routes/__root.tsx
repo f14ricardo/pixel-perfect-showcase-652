@@ -77,19 +77,44 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Sistema de Notas CE 113 - SESI-SP" },
+      {
+        name: "description",
+        content:
+          "Sistema de gestão acadêmica da Escola SESI Milton Sobrosa Cordeiro (CE 113) para consulta de notas, frequência e projeção de desempenho.",
+      },
+      { name: "author", content: "SESI-SP" },
+      {
+        property: "og:title",
+        content: "Sistema de Notas CE 113 - SESI-SP",
+      },
+      {
+        property: "og:description",
+        content:
+          "Consulta de notas, frequência e projeção de desempenho dos estudantes do SESI CE 113.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@SESISP" },
+      {
+        name: "twitter:title",
+        content: "Sistema de Notas CE 113 - SESI-SP",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Consulta de notas, frequência e projeção de desempenho dos estudantes do SESI CE 113.",
+      },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "/__l5e/assets-v1/29405221-f378-439a-97d5-ceaad07fc996/sesi-sp.svg",
       },
     ],
   }),
@@ -101,7 +126,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
