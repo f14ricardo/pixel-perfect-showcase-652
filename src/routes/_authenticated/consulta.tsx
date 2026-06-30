@@ -175,7 +175,7 @@ function ConsultaPage() {
                   size="sm"
                   onClick={() => navigate({ to: "/lista", search: { sala: aluno.sala } as never })}
                 >
-                  <Map className="h-3.5 w-3.5 mr-1" />Mapeamento
+                  <MapIcon className="h-3.5 w-3.5 mr-1" />Mapeamento
                 </Button>
                 <Button asChild variant="outline" size="sm">
                   <Link to="/carometro" search={{ sala: aluno.sala } as never}>
