@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, Users, ListChecks, IdCard, Upload, Shield, GraduationCap } from "lucide-react";
+import { LogOut, Users, ListChecks, IdCard, Upload, Shield, GraduationCap, UserCog } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ const nav: NavItem[] = [
   { to: "/carometro", label: "Carômetro", icon: IdCard },
   { to: "/importacao", label: "Importação", icon: Upload, adminOnly: true },
   { to: "/admin", label: "Usuários", icon: Shield, adminOnly: true },
+  { to: "/usuarios-status", label: "Status", icon: UserCog, adminOnly: true },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

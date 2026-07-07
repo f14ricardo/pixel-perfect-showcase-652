@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedUsuariosStatusRouteImport } from './routes/_authenticated/usuarios-status'
 import { Route as AuthenticatedListaRouteImport } from './routes/_authenticated/lista'
 import { Route as AuthenticatedImportacaoRouteImport } from './routes/_authenticated/importacao'
 import { Route as AuthenticatedConsultaRouteImport } from './routes/_authenticated/consulta'
@@ -32,6 +33,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedUsuariosStatusRoute =
+  AuthenticatedUsuariosStatusRouteImport.update({
+    id: '/usuarios-status',
+    path: '/usuarios-status',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedListaRoute = AuthenticatedListaRouteImport.update({
   id: '/lista',
   path: '/lista',
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/consulta': typeof AuthenticatedConsultaRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
   '/lista': typeof AuthenticatedListaRoute
+  '/usuarios-status': typeof AuthenticatedUsuariosStatusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,6 +83,7 @@ export interface FileRoutesByTo {
   '/consulta': typeof AuthenticatedConsultaRoute
   '/importacao': typeof AuthenticatedImportacaoRoute
   '/lista': typeof AuthenticatedListaRoute
+  '/usuarios-status': typeof AuthenticatedUsuariosStatusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +95,7 @@ export interface FileRoutesById {
   '/_authenticated/consulta': typeof AuthenticatedConsultaRoute
   '/_authenticated/importacao': typeof AuthenticatedImportacaoRoute
   '/_authenticated/lista': typeof AuthenticatedListaRoute
+  '/_authenticated/usuarios-status': typeof AuthenticatedUsuariosStatusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/consulta'
     | '/importacao'
     | '/lista'
+    | '/usuarios-status'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/consulta'
     | '/importacao'
     | '/lista'
+    | '/usuarios-status'
   id:
     | '__root__'
     | '/'
@@ -116,6 +128,7 @@ export interface FileRouteTypes {
     | '/_authenticated/consulta'
     | '/_authenticated/importacao'
     | '/_authenticated/lista'
+    | '/_authenticated/usuarios-status'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -146,6 +159,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/usuarios-status': {
+      id: '/_authenticated/usuarios-status'
+      path: '/usuarios-status'
+      fullPath: '/usuarios-status'
+      preLoaderRoute: typeof AuthenticatedUsuariosStatusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/lista': {
       id: '/_authenticated/lista'
@@ -191,6 +211,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedConsultaRoute: typeof AuthenticatedConsultaRoute
   AuthenticatedImportacaoRoute: typeof AuthenticatedImportacaoRoute
   AuthenticatedListaRoute: typeof AuthenticatedListaRoute
+  AuthenticatedUsuariosStatusRoute: typeof AuthenticatedUsuariosStatusRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -199,6 +220,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedConsultaRoute: AuthenticatedConsultaRoute,
   AuthenticatedImportacaoRoute: AuthenticatedImportacaoRoute,
   AuthenticatedListaRoute: AuthenticatedListaRoute,
+  AuthenticatedUsuariosStatusRoute: AuthenticatedUsuariosStatusRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
