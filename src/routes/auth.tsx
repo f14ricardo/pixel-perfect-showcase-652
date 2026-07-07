@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { GraduationCap, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import sesiLogo from "@/assets/sesi-sp.svg.asset.json";
 
 export const Route = createFileRoute("/auth")({
@@ -16,16 +17,72 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+type FeedbackKind = "error" | "info" | "success";
+interface Feedback {
+  kind: FeedbackKind;
+  title: string;
+  description?: string;
+}
+
+function translateAuthError(msg: string): Feedback {
+  const m = msg.toLowerCase();
+  if (m.includes("invalid login credentials") || m.includes("invalid_credentials")) {
+    return {
+      kind: "error",
+      title: "E-mail ou senha incorretos",
+      description:
+        "Verifique se digitou o e-mail e a senha corretamente. Se ainda não tem conta, use a aba Cadastrar.",
+    };
+  }
+  if (m.includes("email not confirmed") || m.includes("not confirmed")) {
+    return {
+      kind: "error",
+      title: "Conta ainda não ativada",
+      description:
+        "Sua conta existe mas o e-mail não foi confirmado. Peça a um administrador para ativá-la.",
+    };
+  }
+  if (m.includes("user already registered") || m.includes("already registered") || m.includes("already been registered")) {
+    return {
+      kind: "info",
+      title: "E-mail já cadastrado",
+      description: "Este e-mail já possui conta. Use a aba Entrar.",
+    };
+  }
+  if (m.includes("password") && (m.includes("pwned") || m.includes("compromised") || m.includes("breach"))) {
+    return {
+      kind: "error",
+      title: "Senha rejeitada por segurança",
+      description:
+        "Esta senha aparece em vazamentos públicos. Escolha outra senha, com pelo menos 8 caracteres e combinação de letras, números e símbolos.",
+    };
+  }
+  if (m.includes("password") && m.includes("short")) {
+    return { kind: "error", title: "Senha muito curta", description: "Use no mínimo 6 caracteres." };
+  }
+  if (m.includes("rate") && m.includes("limit")) {
+    return {
+      kind: "error",
+      title: "Muitas tentativas",
+      description: "Aguarde alguns instantes antes de tentar novamente.",
+    };
+  }
+  if (m.includes("invalid email")) {
+    return { kind: "error", title: "E-mail inválido", description: "Verifique o formato do e-mail." };
+  }
+  return { kind: "error", title: "Não foi possível concluir", description: msg };
+}
+
 function AuthPage() {
   const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [tab, setTab] = useState<"signin" | "signup">("signin");
 
   useEffect(() => {
-    setMounted(true);
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/consulta", replace: true });
     });
@@ -33,45 +90,89 @@ function AuthPage() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error("Falha ao entrar", { description: error.message });
+    if (error) {
+      setFeedback(translateAuthError(error.message));
+      return;
+    }
     toast.success("Bem-vindo!");
     navigate({ to: "/consulta", replace: true });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: window.location.origin, data: { nome } },
     });
+    if (error) {
+      setLoading(false);
+      setFeedback(translateAuthError(error.message));
+      return;
+    }
+    // With auto-confirm on, session is created immediately.
+    if (data.session) {
+      setLoading(false);
+      toast.success("Conta criada");
+      navigate({ to: "/consulta", replace: true });
+      return;
+    }
+    // Fallback: try to sign in immediately (auto-confirm should allow it)
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error("Falha ao cadastrar", { description: error.message });
-    toast.success("Cadastro criado", { description: "Você já pode entrar." });
+    if (signInErr) {
+      setFeedback({
+        kind: "info",
+        title: "Cadastro criado",
+        description: "Sua conta foi criada, mas o login automático falhou. Use a aba Entrar.",
+      });
+      setTab("signin");
+      return;
+    }
+    toast.success("Conta criada");
+    navigate({ to: "/consulta", replace: true });
   };
 
   const handleGoogle = async () => {
+    setFeedback(null);
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (result.error) {
       setLoading(false);
-      return toast.error("Falha no Google", { description: String(result.error) });
+      setFeedback({ kind: "error", title: "Falha no Google", description: String(result.error) });
+      return;
     }
     if (result.redirected) return;
     navigate({ to: "/consulta", replace: true });
   };
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-header text-header-foreground flex items-center justify-center p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-white/50" />
-      </div>
-    );
-  }
+  const FeedbackBanner = () =>
+    feedback ? (
+      <Alert
+        variant={feedback.kind === "error" ? "destructive" : "default"}
+        className={
+          feedback.kind === "success"
+            ? "border-emerald-500/50 text-emerald-800 [&>svg]:text-emerald-600"
+            : feedback.kind === "info"
+              ? "border-blue-500/50 text-blue-800 [&>svg]:text-blue-600"
+              : ""
+        }
+      >
+        {feedback.kind === "success" ? (
+          <CheckCircle2 className="h-4 w-4" />
+        ) : (
+          <AlertCircle className="h-4 w-4" />
+        )}
+        <AlertTitle>{feedback.title}</AlertTitle>
+        {feedback.description && <AlertDescription>{feedback.description}</AlertDescription>}
+      </Alert>
+    ) : null;
 
   return (
     <div className="min-h-screen bg-header text-header-foreground flex items-center justify-center p-4">
@@ -87,8 +188,8 @@ function AuthPage() {
           <p className="text-sm text-white/60 mt-1">Escola SESI Milton Sobrosa Cordeiro</p>
         </div>
 
-        <div className="bg-card text-card-foreground rounded-xl p-6 shadow-2xl border border-white/10">
-          <Tabs defaultValue="signin">
+        <div className="bg-card text-card-foreground rounded-xl p-6 shadow-2xl border border-white/10 space-y-3">
+          <Tabs value={tab} onValueChange={(v) => { setTab(v as "signin" | "signup"); setFeedback(null); }}>
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="signin">Entrar</TabsTrigger>
               <TabsTrigger value="signup">Cadastrar</TabsTrigger>
@@ -96,6 +197,7 @@ function AuthPage() {
 
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-3 pt-3">
+                <FeedbackBanner />
                 <div>
                   <Label htmlFor="email-in">E-mail</Label>
                   <Input id="email-in" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -112,6 +214,7 @@ function AuthPage() {
 
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-3 pt-3">
+                <FeedbackBanner />
                 <div>
                   <Label htmlFor="nome-up">Nome</Label>
                   <Input id="nome-up" required value={nome} onChange={(e) => setNome(e.target.value)} />
@@ -128,7 +231,7 @@ function AuthPage() {
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Criar conta"}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Novos cadastros recebem o perfil <strong>Consulta</strong>. Um administrador pode alterar.
+                  Novos cadastros são ativados automaticamente e recebem o perfil <strong>Consulta</strong>. Um administrador pode alterar.
                 </p>
               </form>
             </TabsContent>
