@@ -26,7 +26,13 @@ export default defineTool({
     if (alunoErr) return { content: [{ type: "text", text: alunoErr.message }], isError: true };
     if (!aluno) return { content: [{ type: "text", text: "Aluno não encontrado." }], isError: true };
 
-    const coluna = `nota_etapa_${etapa}` as "nota_etapa_1" | "nota_etapa_2" | "nota_etapa_3";
+    const patch =
+      etapa === 1
+        ? { nota_etapa_1: nota }
+        : etapa === 2
+          ? { nota_etapa_2: nota }
+          : { nota_etapa_3: nota };
+
     const { data: existente } = await supabase
       .from("notas")
       .select("id")
@@ -35,12 +41,13 @@ export default defineTool({
       .maybeSingle();
 
     const { data, error } = existente
-      ? await supabase.from("notas").update({ [coluna]: nota }).eq("id", existente.id).select().maybeSingle()
+      ? await supabase.from("notas").update(patch).eq("id", existente.id).select().maybeSingle()
       : await supabase
           .from("notas")
-          .insert({ aluno_id, componente, sala: aluno.sala, [coluna]: nota })
+          .insert({ aluno_id, componente, sala: aluno.sala, ...patch })
           .select()
           .maybeSingle();
+
 
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {
