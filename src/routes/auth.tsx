@@ -13,6 +13,9 @@ import sesiLogo from "@/assets/sesi-sp.svg.asset.json";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
+  }),
   head: () => ({ meta: [{ title: "Entrar — Sistema de Notas CE 113" }] }),
   component: AuthPage,
 });
@@ -75,6 +78,14 @@ function translateAuthError(msg: string): Feedback {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const goNext = () => {
+    if (next) {
+      window.location.href = next;
+      return;
+    }
+    navigate({ to: "/consulta", replace: true });
+  };
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -84,7 +95,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/consulta", replace: true });
+      if (data.session) goNext();
     });
   }, [navigate]);
 
@@ -99,7 +110,7 @@ function AuthPage() {
       return;
     }
     toast.success("Bem-vindo!");
-    navigate({ to: "/consulta", replace: true });
+    goNext();
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -109,7 +120,10 @@ function AuthPage() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.origin, data: { nome } },
+      options: {
+        emailRedirectTo: next ? window.location.origin + next : window.location.origin,
+        data: { nome },
+      },
     });
     if (error) {
       setLoading(false);
@@ -120,7 +134,7 @@ function AuthPage() {
     if (data.session) {
       setLoading(false);
       toast.success("Conta criada");
-      navigate({ to: "/consulta", replace: true });
+      goNext();
       return;
     }
     // Fallback: try to sign in immediately (auto-confirm should allow it)
@@ -136,20 +150,22 @@ function AuthPage() {
       return;
     }
     toast.success("Conta criada");
-    navigate({ to: "/consulta", replace: true });
+    goNext();
   };
 
   const handleGoogle = async () => {
     setFeedback(null);
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: next ? window.location.origin + next : window.location.origin,
+    });
     if (result.error) {
       setLoading(false);
       setFeedback({ kind: "error", title: "Falha no Google", description: String(result.error) });
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/consulta", replace: true });
+    goNext();
   };
 
   const FeedbackBanner = () =>
