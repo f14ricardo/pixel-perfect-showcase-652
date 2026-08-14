@@ -13,9 +13,11 @@ import sesiLogo from "@/assets/sesi-sp.svg.asset.json";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>) => ({
-    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { next?: string } =>
+    typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//")
+      ? { next: s.next }
+      : {},
+
   head: () => ({ meta: [{ title: "Entrar — Sistema de Notas CE 113" }] }),
   component: AuthPage,
 });
