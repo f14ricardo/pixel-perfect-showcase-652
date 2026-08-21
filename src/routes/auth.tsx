@@ -12,7 +12,6 @@ import { GraduationCap, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import sesiLogo from "@/assets/sesi-sp.svg.asset.json";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
   validateSearch: (s: Record<string, unknown>): { next?: string } =>
     typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//")
       ? { next: s.next }
