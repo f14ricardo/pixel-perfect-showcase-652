@@ -30,20 +30,20 @@ function CarometroPage() {
   }, [sala]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <Card>
-        <CardContent className="p-4 flex flex-wrap gap-3 items-end print:hidden">
-          <div className="min-w-[200px]">
+        <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:items-end print:hidden">
+          <div className="w-full sm:min-w-[200px] sm:w-auto">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sala</label>
             <Select value={sala} onValueChange={setSala}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {SALAS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div className="flex-1" />
-          <Button variant="outline" onClick={() => window.print()}>
+          <div className="hidden sm:block flex-1" />
+          <Button variant="outline" onClick={() => window.print()} className="w-full sm:w-auto">
             <Printer className="h-4 w-4 mr-1" /> Imprimir
           </Button>
         </CardContent>
@@ -55,13 +55,13 @@ function CarometroPage() {
 
       {loading && <div className="text-center py-10 text-muted-foreground">Carregando...</div>}
       {!loading && alunos.length === 0 && (
-        <Card><CardContent className="p-10 text-center text-muted-foreground">Nenhum aluno cadastrado em {sala}.</CardContent></Card>
+        <Card><CardContent className="p-6 sm:p-10 text-center text-muted-foreground">Nenhum aluno cadastrado em {sala}.</CardContent></Card>
       )}
 
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 print:grid-cols-4">
+      <div className="grid gap-3 grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 print:grid-cols-4">
         {alunos.map((a) => (
           <div key={a.id} className="bg-card border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow print:shadow-none print:break-inside-avoid">
-            <div className="aspect-[3/4] bg-muted relative">
+            <div className="aspect-[4/3] min-[380px]:aspect-[3/4] bg-muted relative">
               {a.foto_url ? (
                 <img src={a.foto_url} alt={a.nome} className="w-full h-full object-cover" />
               ) : (
@@ -73,7 +73,7 @@ function CarometroPage() {
                 {STATUS_LABEL[a.status_aluno]}
               </span>
             </div>
-            <div className="p-2 text-center">
+            <div className="p-2.5 sm:p-2 text-center">
               <div className="text-xs font-semibold leading-tight line-clamp-2 min-h-[2.25rem]">{a.nome}</div>
               <div className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider">{a.sala}</div>
               {a.matricula && <div className="text-[10px] text-muted-foreground">Mat. {a.matricula}</div>}
