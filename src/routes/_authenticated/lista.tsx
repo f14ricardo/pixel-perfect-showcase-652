@@ -33,6 +33,8 @@ export const Route = createFileRoute("/_authenticated/lista")({
   component: ListaPage,
 });
 
+const MEDIA_ESCOLAR = 7;
+
 interface Row {
   id: string;
   nome: string;
@@ -41,7 +43,6 @@ interface Row {
   foto_url: string | null;
   status_aluno: "AT" | "TR" | "RE";
   notas: Record<string, number | null>;
-  abaixo_media: boolean;
 }
 
 interface ConfigSala {
@@ -83,20 +84,15 @@ function ListaPage() {
         notas[r.componente] = projecao(r.nota_etapa_1, r.nota_etapa_2, r.nota_etapa_3);
         notasByAluno.set(r.aluno_id, notas);
       }
-      const rows: Row[] = (a.data ?? []).map((al) => {
-        const notas = notasByAluno.get(al.id) ?? {};
-        const abaixo = Object.values(notas).some((nota) => nota !== null && nota < 5);
-        return {
-          id: al.id,
-          nome: al.nome,
-          sala: al.sala,
-          matricula: al.matricula,
-          foto_url: al.foto_url,
-          status_aluno: al.status_aluno as Row["status_aluno"],
-          notas,
-          abaixo_media: abaixo,
-        };
-      });
+      const rows: Row[] = (a.data ?? []).map((al) => ({
+        id: al.id,
+        nome: al.nome,
+        sala: al.sala,
+        matricula: al.matricula,
+        foto_url: al.foto_url,
+        status_aluno: al.status_aluno as Row["status_aluno"],
+        notas: notasByAluno.get(al.id) ?? {},
+      }));
       setConfiguracoes((c.data ?? []) as ConfigSala[]);
       setRows(rows);
       setLoading(false);
@@ -122,16 +118,22 @@ function ListaPage() {
 
   const filtered = useMemo(
     () =>
-      rows.filter(
-        (r) =>
+      rows.filter((r) => {
+        const temComponenteAbaixoDaMedia = componentes.some((componente) => {
+          const nota = r.notas[componente];
+          return nota !== null && nota !== undefined && !Number.isNaN(nota) && nota < MEDIA_ESCOLAR;
+        });
+
+        return (
           (!sala || r.sala === sala) &&
           (!status || r.status_aluno === status) &&
           (!q ||
             r.nome.toLowerCase().includes(q.toLowerCase()) ||
             r.matricula?.toLowerCase().includes(q.toLowerCase())) &&
-          (!onlyBelow || r.abaixo_media),
-      ),
-    [rows, sala, status, q, onlyBelow],
+          (!onlyBelow || temComponenteAbaixoDaMedia)
+        );
+      }),
+    [rows, sala, status, q, onlyBelow, componentes],
   );
 
   const exportCsv = () => {
@@ -208,7 +210,8 @@ function ListaPage() {
           <Button
             variant={onlyBelow ? "default" : "outline"}
             onClick={() => setOnlyBelow((v) => !v)}
-            className="w-full md:w-auto"
+            className="w-full md:w-auto whitespace-nowrap"
+            title="Mostrar alunos com pelo menos um componente curricular abaixo de 7,0"
           >
             Abaixo da média
           </Button>
@@ -229,6 +232,9 @@ function ListaPage() {
         <CardContent className="p-0">
           <div className="px-3 sm:px-4 py-2 text-xs text-muted-foreground border-b flex flex-wrap gap-2 items-center justify-between">
             <span>{filtered.length} aluno(s)</span>
+            {onlyBelow && (
+              <span className="font-medium text-amber-700">Com pelo menos uma disciplina abaixo de 7,0</span>
+            )}
             <span className="sm:hidden text-[10px]">Deslize para o lado para ver as notas</span>
           </div>
           <div className="overflow-x-auto">
@@ -236,7 +242,7 @@ function ListaPage() {
               <thead>
                 <tr className="border-b bg-muted/40">
                   <th className="text-left px-3 py-2 sticky left-0 z-20 bg-muted">Aluno</th>
-                  <th className="text-left px-3 py-2">Sala</th>
+                  <th className="text-left px-3 py-2 whitespace-nowrap">Sala</th>
                   <th className="text-left px-3 py-2">Status</th>
                   {componentes.map((componente) => (
                     <th
@@ -289,8 +295,10 @@ function ListaPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2">
-                      <Badge variant="outline">{r.sala}</Badge>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <Badge variant="outline" className="whitespace-nowrap min-w-fit">
+                        {r.sala}
+                      </Badge>
                     </td>
                     <td className="px-3 py-2">
                       <span
