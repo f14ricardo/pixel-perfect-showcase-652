@@ -158,15 +158,15 @@ function ListaPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <Card>
-        <CardContent className="p-4 grid gap-3 md:grid-cols-[200px_1fr_180px_auto_auto] items-end print:hidden">
-          <div>
+        <CardContent className="p-3 sm:p-4 grid gap-3 md:grid-cols-[200px_1fr_180px_auto_auto] items-end print:hidden">
+          <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Sala
             </label>
             <Select value={sala || "all"} onValueChange={(v) => setSala(v === "all" ? "" : v)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="max-h-72">
@@ -179,7 +179,7 @@ function ListaPage() {
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Buscar
             </label>
@@ -189,12 +189,12 @@ function ListaPage() {
               placeholder="Nome ou matrícula..."
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Status
             </label>
             <Select value={status || "all"} onValueChange={(v) => setStatus(v === "all" ? "" : v)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -208,31 +208,34 @@ function ListaPage() {
           <Button
             variant={onlyBelow ? "default" : "outline"}
             onClick={() => setOnlyBelow((v) => !v)}
+            className="w-full md:w-auto"
           >
             Abaixo da média
           </Button>
-          <div className="flex gap-1">
-            <Button variant="outline" onClick={exportCsv}>
+          <div className="grid grid-cols-2 gap-2 md:flex md:gap-1">
+            <Button variant="outline" onClick={exportCsv} className="w-full md:w-auto">
               <Download className="h-4 w-4 mr-1" />
               CSV
             </Button>
-            <Button variant="outline" onClick={() => window.print()}>
-              <Printer className="h-4 w-4" />
+            <Button variant="outline" onClick={() => window.print()} className="w-full md:w-auto">
+              <Printer className="h-4 w-4 mr-1 md:mr-0" />
+              <span className="md:hidden">Imprimir</span>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="min-w-0">
         <CardContent className="p-0">
-          <div className="px-4 py-2 text-xs text-muted-foreground border-b flex items-center justify-between">
+          <div className="px-3 sm:px-4 py-2 text-xs text-muted-foreground border-b flex flex-wrap gap-2 items-center justify-between">
             <span>{filtered.length} aluno(s)</span>
+            <span className="sm:hidden text-[10px]">Deslize para o lado para ver as notas</span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr className="border-b bg-muted/40">
-                  <th className="text-left px-3 py-2">Aluno</th>
+                  <th className="text-left px-3 py-2 sticky left-0 z-20 bg-muted">Aluno</th>
                   <th className="text-left px-3 py-2">Sala</th>
                   <th className="text-left px-3 py-2">Status</th>
                   {componentes.map((componente) => (
@@ -268,9 +271,9 @@ function ListaPage() {
                   </tr>
                 )}
                 {filtered.map((r) => (
-                  <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-2">
+                  <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30 group">
+                    <td className="px-3 py-2 sticky left-0 z-10 bg-card group-hover:bg-muted">
+                      <div className="flex items-center gap-2 min-w-[220px]">
                         <div className="h-8 w-8 rounded-full bg-muted overflow-hidden shrink-0">
                           {r.foto_url ? (
                             <img src={r.foto_url} className="w-full h-full object-cover" alt="" />
@@ -279,7 +282,7 @@ function ListaPage() {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-medium truncate">{r.nome}</div>
+                          <div className="font-medium truncate max-w-[180px]">{r.nome}</div>
                           {r.matricula && (
                             <div className="text-xs text-muted-foreground">{r.matricula}</div>
                           )}
