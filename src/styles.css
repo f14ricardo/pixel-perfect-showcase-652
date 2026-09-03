@@ -133,10 +133,56 @@
   * {
     border-color: var(--color-border);
   }
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  .mobile-nav {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 22%) transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-nav::-webkit-scrollbar,
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .mobile-nav::-webkit-scrollbar-thumb,
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: rgb(128 128 128 / 35%);
+    border-radius: 999px;
+  }
+
+  .mobile-nav::-webkit-scrollbar-track,
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .overflow-x-auto > table {
+    min-width: max-content;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  button[role="combobox"] {
+    min-height: 2.75rem;
   }
 }
