@@ -86,57 +86,64 @@ function AdminPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <Card>
-        <CardContent className="p-4">
-          <h1 className="text-lg font-semibold flex items-center gap-2"><Shield className="h-5 w-5 text-brand" />Gestão de Usuários</h1>
+        <CardContent className="p-3 sm:p-4">
+          <h1 className="text-base sm:text-lg font-semibold flex items-center gap-2"><Shield className="h-5 w-5 text-brand" />Gestão de Usuários</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Atribua perfis aos usuários cadastrados. Novos cadastros recebem automaticamente o perfil <strong>Consulta</strong>.
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="min-w-0">
         <CardContent className="p-0">
           {loading ? (
             <div className="p-4 space-y-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40 border-b">
-                  <tr>
-                    <th className="text-left px-3 py-2">Usuário</th>
-                    {ROLES.map((r) => <th key={r.value} className="text-center px-3 py-2" title={r.description}>{r.label}</th>)}
-                    <th className="px-3 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.length === 0 && <tr><td colSpan={ROLES.length + 2} className="text-center py-10 text-muted-foreground">Nenhum usuário cadastrado ainda.</td></tr>}
-                  {users.map((u) => (
-                    <tr key={u.id} className="border-b last:border-0">
-                      <td className="px-3 py-2">
-                        <div className="font-medium">{u.nome || u.email}</div>
-                        <div className="text-xs text-muted-foreground">{u.email}</div>
-                        <div className="flex gap-1 mt-1 flex-wrap">
-                          {u.roles.length === 0 && <Badge variant="outline" className="text-[10px]">sem perfil</Badge>}
-                          {u.roles.map((r) => <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>)}
-                        </div>
-                      </td>
-                      {ROLES.map((r) => (
-                        <td key={r.value} className="px-3 py-2 text-center">
-                          <Checkbox checked={u.roles.includes(r.value)} onCheckedChange={() => toggleRole(u.id, r.value)} />
-                        </td>
-                      ))}
-                      <td className="px-3 py-2 text-right">
-                        <Button size="sm" variant="outline" disabled={savingId === u.id} onClick={() => saveUser(u)}>
-                          <Save className="h-3.5 w-3.5 mr-1" />{savingId === u.id ? "..." : "Salvar"}
-                        </Button>
-                      </td>
+            <>
+              <div className="sm:hidden px-3 py-2 text-[11px] text-muted-foreground border-b bg-muted/20">
+                Deslize para o lado para visualizar e alterar todos os perfis.
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead className="bg-muted/40 border-b">
+                    <tr>
+                      <th className="text-left px-3 py-2 sticky left-0 z-20 bg-muted">Usuário</th>
+                      {ROLES.map((r) => <th key={r.value} className="text-center px-3 py-2" title={r.description}>{r.label}</th>)}
+                      <th className="px-3 py-2"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {users.length === 0 && <tr><td colSpan={ROLES.length + 2} className="text-center py-10 text-muted-foreground">Nenhum usuário cadastrado ainda.</td></tr>}
+                    {users.map((u) => (
+                      <tr key={u.id} className="border-b last:border-0 group">
+                        <td className="px-3 py-2 sticky left-0 z-10 bg-card group-hover:bg-muted">
+                          <div className="min-w-[220px]">
+                            <div className="font-medium truncate max-w-[210px]">{u.nome || u.email}</div>
+                            <div className="text-xs text-muted-foreground truncate max-w-[210px]">{u.email}</div>
+                            <div className="flex gap-1 mt-1 flex-wrap">
+                              {u.roles.length === 0 && <Badge variant="outline" className="text-[10px]">sem perfil</Badge>}
+                              {u.roles.map((r) => <Badge key={r} variant="secondary" className="text-[10px]">{r}</Badge>)}
+                            </div>
+                          </div>
+                        </td>
+                        {ROLES.map((r) => (
+                          <td key={r.value} className="px-3 py-2 text-center">
+                            <Checkbox checked={u.roles.includes(r.value)} onCheckedChange={() => toggleRole(u.id, r.value)} />
+                          </td>
+                        ))}
+                        <td className="px-3 py-2 text-right">
+                          <Button size="sm" variant="outline" disabled={savingId === u.id} onClick={() => saveUser(u)}>
+                            <Save className="h-3.5 w-3.5 mr-1" />{savingId === u.id ? "..." : "Salvar"}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
