@@ -18,7 +18,6 @@ import {
   STATUS_LABEL,
   formatNota,
   gradeClass,
-  projecao,
   statusBadgeClass,
 } from "@/lib/sistema";
 import { Download, Printer, User } from "lucide-react";
@@ -34,6 +33,13 @@ export const Route = createFileRoute("/_authenticated/lista")({
 });
 
 const MEDIA_ESCOLAR = 7;
+type Etapa = 1 | 2 | 3;
+
+interface NotaEtapas {
+  n1: number | null;
+  n2: number | null;
+  n3: number | null;
+}
 
 interface Row {
   id: string;
@@ -42,7 +48,7 @@ interface Row {
   matricula: string | null;
   foto_url: string | null;
   status_aluno: "AT" | "TR" | "RE";
-  notas: Record<string, number | null>;
+  notas: Record<string, NotaEtapas>;
 }
 
 interface ConfigSala {
@@ -51,11 +57,20 @@ interface ConfigSala {
   ordem: number;
 }
 
+function notaDaEtapa(row: Row, componente: string, etapa: Etapa): number | null {
+  const nota = row.notas[componente];
+  if (!nota) return null;
+  if (etapa === 1) return nota.n1;
+  if (etapa === 2) return nota.n2;
+  return nota.n3;
+}
+
 function ListaPage() {
   const search = useSearch({ from: "/_authenticated/lista" });
   const [sala, setSala] = useState(search.sala);
   const [status, setStatus] = useState(search.status);
   const [q, setQ] = useState(search.q);
+  const [etapa, setEtapa] = useState<Etapa>(1);
   const [onlyBelow, setOnlyBelow] = useState(false);
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
@@ -72,7 +87,7 @@ function ListaPage() {
       supabase.from("notas").select("aluno_id,componente,nota_etapa_1,nota_etapa_2,nota_etapa_3"),
       supabase.from("configuracoes_salas").select("sala,componente,ordem").order("ordem"),
     ]).then(([a, n, c]) => {
-      const notasByAluno = new Map<string, Record<string, number | null>>();
+      const notasByAluno = new Map<string, Record<string, NotaEtapas>>();
       for (const r of (n.data ?? []) as {
         aluno_id: string;
         componente: string;
@@ -81,7 +96,11 @@ function ListaPage() {
         nota_etapa_3: number | null;
       }[]) {
         const notas = notasByAluno.get(r.aluno_id) ?? {};
-        notas[r.componente] = projecao(r.nota_etapa_1, r.nota_etapa_2, r.nota_etapa_3);
+        notas[r.componente] = {
+          n1: r.nota_etapa_1,
+          n2: r.nota_etapa_2,
+          n3: r.nota_etapa_3,
+        };
         notasByAluno.set(r.aluno_id, notas);
       }
       const rows: Row[] = (a.data ?? []).map((al) => ({
@@ -120,8 +139,8 @@ function ListaPage() {
     () =>
       rows.filter((r) => {
         const temComponenteAbaixoDaMedia = componentes.some((componente) => {
-          const nota = r.notas[componente];
-          return nota !== null && nota !== undefined && !Number.isNaN(nota) && nota < MEDIA_ESCOLAR;
+          const nota = notaDaEtapa(r, componente, etapa);
+          return nota !== null && !Number.isNaN(nota) && nota < MEDIA_ESCOLAR;
         });
 
         return (
@@ -133,11 +152,11 @@ function ListaPage() {
           (!onlyBelow || temComponenteAbaixoDaMedia)
         );
       }),
-    [rows, sala, status, q, onlyBelow, componentes],
+    [rows, sala, status, q, onlyBelow, componentes, etapa],
   );
 
   const exportCsv = () => {
-    const headers = ["Aluno", "Matricula", "Sala", "Status", ...componentes];
+    const headers = ["Aluno", "Matricula", "Sala", "Status", "Etapa", ...componentes];
     const lines = [headers.join(",")];
     for (const r of filtered) {
       lines.push(
@@ -146,7 +165,11 @@ function ListaPage() {
           r.matricula ?? "",
           r.sala,
           r.status_aluno,
-          ...componentes.map((componente) => r.notas[componente]?.toFixed(2) ?? ""),
+          `${etapa}a Etapa`,
+          ...componentes.map((componente) => {
+            const nota = notaDaEtapa(r, componente, etapa);
+            return nota?.toFixed(2) ?? "";
+          }),
         ].join(","),
       );
     }
@@ -154,7 +177,7 @@ function ListaPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `lista-alunos-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `lista-alunos-${etapa}a-etapa-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -162,7 +185,7 @@ function ListaPage() {
   return (
     <div className="space-y-3 sm:space-y-4">
       <Card>
-        <CardContent className="p-3 sm:p-4 grid gap-3 md:grid-cols-[200px_1fr_180px_auto_auto] items-end print:hidden">
+        <CardContent className="p-3 sm:p-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-[160px_minmax(220px,1fr)_150px_150px_auto_auto] items-end print:hidden">
           <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Sala
@@ -181,6 +204,7 @@ function ListaPage() {
               </SelectContent>
             </Select>
           </div>
+
           <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Buscar
@@ -191,6 +215,7 @@ function ListaPage() {
               placeholder="Nome ou matrícula..."
             />
           </div>
+
           <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Status
@@ -207,22 +232,40 @@ function ListaPage() {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="min-w-0">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Etapa
+            </label>
+            <Select value={String(etapa)} onValueChange={(v) => setEtapa(Number(v) as Etapa)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1ª Etapa</SelectItem>
+                <SelectItem value="2">2ª Etapa</SelectItem>
+                <SelectItem value="3">3ª Etapa</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <Button
             variant={onlyBelow ? "default" : "outline"}
             onClick={() => setOnlyBelow((v) => !v)}
-            className="w-full md:w-auto whitespace-nowrap"
-            title="Mostrar alunos com pelo menos um componente curricular abaixo de 7,0"
+            className="w-full lg:w-auto whitespace-nowrap"
+            title={`Mostrar alunos com pelo menos um componente abaixo de 7,0 na ${etapa}ª etapa`}
           >
             Abaixo da média
           </Button>
-          <div className="grid grid-cols-2 gap-2 md:flex md:gap-1">
-            <Button variant="outline" onClick={exportCsv} className="w-full md:w-auto">
+
+          <div className="grid grid-cols-2 gap-2 lg:flex lg:gap-1">
+            <Button variant="outline" onClick={exportCsv} className="w-full lg:w-auto">
               <Download className="h-4 w-4 mr-1" />
               CSV
             </Button>
-            <Button variant="outline" onClick={() => window.print()} className="w-full md:w-auto">
-              <Printer className="h-4 w-4 mr-1 md:mr-0" />
-              <span className="md:hidden">Imprimir</span>
+            <Button variant="outline" onClick={() => window.print()} className="w-full lg:w-auto">
+              <Printer className="h-4 w-4 mr-1 lg:mr-0" />
+              <span className="lg:hidden">Imprimir</span>
             </Button>
           </div>
         </CardContent>
@@ -232,8 +275,11 @@ function ListaPage() {
         <CardContent className="p-0">
           <div className="px-3 sm:px-4 py-2 text-xs text-muted-foreground border-b flex flex-wrap gap-2 items-center justify-between">
             <span>{filtered.length} aluno(s)</span>
+            <span className="font-medium text-primary">Notas da {etapa}ª Etapa</span>
             {onlyBelow && (
-              <span className="font-medium text-amber-700">Com pelo menos uma disciplina abaixo de 7,0</span>
+              <span className="font-medium text-amber-700">
+                Com pelo menos uma disciplina abaixo de 7,0 na {etapa}ª etapa
+              </span>
             )}
             <span className="sm:hidden text-[10px]">Deslize para o lado para ver as notas</span>
           </div>
@@ -307,15 +353,18 @@ function ListaPage() {
                         {STATUS_LABEL[r.status_aluno]}
                       </span>
                     </td>
-                    {componentes.map((componente) => (
-                      <td key={componente} className="px-3 py-2 text-center">
-                        <span
-                          className={`inline-block min-w-[3rem] px-2 py-1 rounded font-semibold ${gradeClass(r.notas[componente])}`}
-                        >
-                          {formatNota(r.notas[componente])}
-                        </span>
-                      </td>
-                    ))}
+                    {componentes.map((componente) => {
+                      const nota = notaDaEtapa(r, componente, etapa);
+                      return (
+                        <td key={componente} className="px-3 py-2 text-center">
+                          <span
+                            className={`inline-block min-w-[3rem] px-2 py-1 rounded font-semibold ${gradeClass(nota)}`}
+                          >
+                            {formatNota(nota)}
+                          </span>
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
