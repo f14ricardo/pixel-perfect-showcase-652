@@ -92,22 +92,22 @@ function ConsultaPage() {
   };
 
   return (
-    <div className="space-y-4 print:space-y-2">
+    <div className="space-y-3 sm:space-y-4 print:space-y-2">
       <Card>
-        <CardContent className="p-4 grid gap-3 md:grid-cols-[1fr_2fr_1fr_auto] items-end print:hidden">
-          <div>
+        <CardContent className="p-3 sm:p-4 grid gap-3 md:grid-cols-[1fr_2fr_1fr_auto] items-end print:hidden">
+          <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sala</label>
             <Select value={sala} onValueChange={setSala}>
-              <SelectTrigger><SelectValue placeholder="Selecione a sala" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Selecione a sala" /></SelectTrigger>
               <SelectContent className="max-h-72">
                 {SALAS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Aluno</label>
             <Select value={alunoId} onValueChange={setAlunoId} disabled={!sala || loadingAlunos}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder={!sala ? "Selecione a sala primeiro" : loadingAlunos ? "Carregando..." : alunos.length ? "Selecione o aluno" : "Nenhum aluno nesta sala"} />
               </SelectTrigger>
               <SelectContent className="max-h-72">
@@ -115,10 +115,10 @@ function ConsultaPage() {
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Etapa atual</label>
             <Select value={String(etapa)} onValueChange={(v) => setEtapa(Number(v) as Etapa)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="1">1ª Etapa</SelectItem>
                 <SelectItem value="2">2ª Etapa</SelectItem>
@@ -126,7 +126,7 @@ function ConsultaPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" onClick={refresh} disabled={!alunoId}>
+          <Button variant="outline" onClick={refresh} disabled={!alunoId} className="w-full md:w-auto">
             <RefreshCw className="h-4 w-4 mr-1.5" /> Atualizar
           </Button>
         </CardContent>
@@ -134,17 +134,17 @@ function ConsultaPage() {
 
       {!aluno && (
         <Card>
-          <CardContent className="p-10 text-center text-muted-foreground">
+          <CardContent className="p-6 sm:p-10 text-center text-muted-foreground">
             <User className="h-10 w-10 mx-auto mb-2 opacity-30" />
-            <p>Selecione uma sala e um aluno para visualizar a ficha individual.</p>
+            <p className="text-sm sm:text-base">Selecione uma sala e um aluno para visualizar a ficha individual.</p>
           </CardContent>
         </Card>
       )}
 
       {aluno && (
-        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-[280px_1fr]">
           <Card className="overflow-hidden">
-            <div className="aspect-[3/4] bg-muted relative">
+            <div className="aspect-[4/3] sm:aspect-[3/4] bg-muted relative">
               {aluno.foto_url ? (
                 <img src={aluno.foto_url} alt={aluno.nome} className="w-full h-full object-cover" />
               ) : (
@@ -153,7 +153,7 @@ function ConsultaPage() {
                 </div>
               )}
             </div>
-            <CardContent className="p-4 space-y-2">
+            <CardContent className="p-3 sm:p-4 space-y-2">
               <h2 className="font-semibold text-base leading-tight">{aluno.nome}</h2>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="outline">{aluno.sala}</Badge>
@@ -169,7 +169,7 @@ function ConsultaPage() {
                   1ª {formatFreq(freq?.freq1)} · 2ª {formatFreq(freq?.freq2)} · 3ª {formatFreq(freq?.freq3)}
                 </div>
               </div>
-              <div className="pt-2 grid grid-cols-2 gap-2 print:hidden">
+              <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 print:hidden">
                 <Button
                   variant="outline"
                   size="sm"
@@ -182,17 +182,17 @@ function ConsultaPage() {
                     <IdCard className="h-3.5 w-3.5 mr-1" />Carômetro
                   </Link>
                 </Button>
-                <Button variant="default" size="sm" className="col-span-2" onClick={() => window.print()}>
+                <Button variant="default" size="sm" className="sm:col-span-2" onClick={() => window.print()}>
                   <Printer className="h-3.5 w-3.5 mr-1" />Imprimir ficha
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0">
             <CardContent className="p-0">
-              <div className="px-4 py-3 border-b flex items-center justify-between bg-secondary/40">
-                <h3 className="font-semibold">Notas por componente</h3>
+              <div className="px-3 sm:px-4 py-3 border-b flex flex-wrap items-center justify-between gap-2 bg-secondary/40">
+                <h3 className="font-semibold text-sm sm:text-base">Notas por componente</h3>
                 <div className="flex items-center gap-1 text-xs">
                   <span className="text-muted-foreground">Etapa atual:</span>
                   <span className="font-semibold text-primary flex items-center gap-1">
@@ -205,44 +205,49 @@ function ConsultaPage() {
                   {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/40">
-                        <th className="text-left px-3 py-2 w-10">Nº</th>
-                        <th className="text-left px-3 py-2">Componente</th>
-                        <EtapaTh n={1} active={etapa === 1} />
-                        <EtapaTh n={2} active={etapa === 2} />
-                        <EtapaTh n={3} active={etapa === 3} />
-                        <th className="text-center px-3 py-2 font-semibold">Projeção</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.length === 0 && (
-                        <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">
-                          Sem componentes configurados para esta sala.
-                        </td></tr>
-                      )}
-                      {rows.map((r) => (
-                        <tr key={r.componente} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="px-3 py-2 text-muted-foreground">{r.idx}</td>
-                          <td className="px-3 py-2">
-                            <div className="font-medium">{r.componente}</div>
-                            <div className="text-xs text-muted-foreground">{COMPONENTES_LABEL[r.componente] ?? r.componente}</div>
-                          </td>
-                          <NotaTd value={r.n1} active={etapa === 1} />
-                          <NotaTd value={r.n2} active={etapa === 2} />
-                          <NotaTd value={r.n3} active={etapa === 3} />
-                          <td className="px-3 py-2 text-center">
-                            <span className={`inline-block px-2 py-1 rounded font-semibold ${gradeClass(r.proj)}`}>
-                              {formatNota(r.proj)}
-                            </span>
-                          </td>
+                <>
+                  <div className="sm:hidden px-3 py-2 text-[11px] text-muted-foreground border-b bg-muted/20">
+                    Deslize a tabela para o lado para visualizar todas as etapas.
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[620px] text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/40">
+                          <th className="text-left px-3 py-2 w-10">Nº</th>
+                          <th className="text-left px-3 py-2">Componente</th>
+                          <EtapaTh n={1} active={etapa === 1} />
+                          <EtapaTh n={2} active={etapa === 2} />
+                          <EtapaTh n={3} active={etapa === 3} />
+                          <th className="text-center px-3 py-2 font-semibold">Projeção</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {rows.length === 0 && (
+                          <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">
+                            Sem componentes configurados para esta sala.
+                          </td></tr>
+                        )}
+                        {rows.map((r) => (
+                          <tr key={r.componente} className="border-b last:border-0 hover:bg-muted/30">
+                            <td className="px-3 py-2 text-muted-foreground">{r.idx}</td>
+                            <td className="px-3 py-2">
+                              <div className="font-medium">{r.componente}</div>
+                              <div className="text-xs text-muted-foreground">{COMPONENTES_LABEL[r.componente] ?? r.componente}</div>
+                            </td>
+                            <NotaTd value={r.n1} active={etapa === 1} />
+                            <NotaTd value={r.n2} active={etapa === 2} />
+                            <NotaTd value={r.n3} active={etapa === 3} />
+                            <td className="px-3 py-2 text-center">
+                              <span className={`inline-block px-2 py-1 rounded font-semibold ${gradeClass(r.proj)}`}>
+                                {formatNota(r.proj)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
