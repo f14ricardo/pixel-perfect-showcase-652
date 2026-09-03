@@ -39,10 +39,10 @@ const TEMPLATES: Record<Tipo, { headers: string[]; example: string[][] }> = {
 
 function ImportacaoPage() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <Card>
-        <CardContent className="p-4">
-          <h1 className="text-lg font-semibold">Importação de Dados</h1>
+        <CardContent className="p-3 sm:p-4">
+          <h1 className="text-base sm:text-lg font-semibold">Importação de Dados</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Envie arquivos CSV contendo alunos, frequências ou notas. A primeira linha deve conter os cabeçalhos exatos do modelo.
           </p>
@@ -50,7 +50,7 @@ function ImportacaoPage() {
       </Card>
 
       <Tabs defaultValue="alunos">
-        <TabsList>
+        <TabsList className="grid grid-cols-3 w-full sm:w-auto">
           <TabsTrigger value="alunos">Alunos</TabsTrigger>
           <TabsTrigger value="frequencias">Frequências</TabsTrigger>
           <TabsTrigger value="notas">Notas</TabsTrigger>
@@ -90,7 +90,6 @@ function ImportPanel({ tipo }: { tipo: Tipo }) {
     }
     const rows = parsed.data;
     const out: RowResult[] = [];
-    // For frequencias/notas we need aluno_id resolution by matricula
     const matriculas = [...new Set(rows.map((r) => r.matricula).filter(Boolean))];
     let matMap = new Map<string, string>();
     if (tipo !== "alunos" && matriculas.length) {
@@ -157,26 +156,28 @@ function ImportPanel({ tipo }: { tipo: Tipo }) {
 
   return (
     <Card>
-      <CardContent className="p-4 space-y-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[280px]">
+      <CardContent className="p-3 sm:p-4 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
+          <div className="w-full min-w-0 sm:flex-1 sm:min-w-[280px]">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Arquivo CSV</label>
             <Input type="file" accept=".csv,text/csv" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
           </div>
-          <Button variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-1.5" />Modelo</Button>
-          <Button onClick={process} disabled={!file || busy}>
+          <Button variant="outline" onClick={downloadTemplate} className="w-full sm:w-auto"><Download className="h-4 w-4 mr-1.5" />Modelo</Button>
+          <Button onClick={process} disabled={!file || busy} className="w-full sm:w-auto">
             <Upload className="h-4 w-4 mr-1.5" />{busy ? "Importando..." : "Importar"}
           </Button>
         </div>
 
-        <div className="text-xs text-muted-foreground border rounded p-3 bg-secondary/30">
+        <div className="text-xs text-muted-foreground border rounded p-3 bg-secondary/30 min-w-0">
           <div className="font-semibold mb-1 flex items-center gap-1.5"><FileSpreadsheet className="h-3.5 w-3.5" />Cabeçalhos esperados:</div>
-          <code className="text-xs">{tpl.headers.join(", ")}</code>
+          <div className="overflow-x-auto pb-1">
+            <code className="text-xs whitespace-nowrap">{tpl.headers.join(", ")}</code>
+          </div>
         </div>
 
         {results.length > 0 && (
           <div className="border rounded max-h-72 overflow-auto">
-            <table className="w-full text-xs">
+            <table className="w-full min-w-[420px] text-xs">
               <thead className="bg-muted/40 sticky top-0">
                 <tr><th className="text-left px-3 py-1.5 w-16">Linha</th><th className="text-left px-3 py-1.5 w-16">Status</th><th className="text-left px-3 py-1.5">Mensagem</th></tr>
               </thead>
