@@ -30,12 +30,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="bg-header text-header-foreground border-b border-white/10">
-        <div className="max-w-[1400px] mx-auto px-4 py-3 flex items-center gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
+      <header className="bg-header text-header-foreground border-b border-white/10 sticky top-0 z-50 print:static">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="bg-white rounded-md px-2 py-1.5 shrink-0">
-              <img src={sesiLogo.url} alt="SESI-SP" className="h-6 w-auto" />
+              <img src={sesiLogo.url} alt="SESI-SP" className="h-5 sm:h-6 w-auto" />
+            </div>
+            <div className="min-w-0 sm:hidden">
+              <div className="font-semibold text-sm leading-tight truncate flex items-center gap-1.5">
+                <GraduationCap className="h-3.5 w-3.5 text-brand shrink-0" />
+                Notas CE 113
+              </div>
+              <div className="text-[10px] uppercase tracking-wider text-white/55 truncate">SESI Milton Sobrosa Cordeiro</div>
             </div>
             <div className="min-w-0 hidden sm:block">
               <div className="text-xs uppercase tracking-wider text-white/60 leading-none">Escola SESI Milton Sobrosa Cordeiro</div>
@@ -65,7 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="border-t border-white/10 bg-black/20">
-          <div className="max-w-[1400px] mx-auto px-2 flex items-center gap-1 overflow-x-auto">
+          <div className="mobile-nav max-w-[1400px] mx-auto px-1.5 sm:px-2 flex items-stretch gap-0.5 sm:gap-1 overflow-x-auto overscroll-x-contain">
             {nav.map((item) => {
               if (item.adminOnly && !isAdmin) return null;
               const active = pathname === item.to || (item.to !== "/consulta" && pathname.startsWith(item.to));
@@ -74,31 +81,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`flex items-center gap-2 px-3 py-2.5 text-sm whitespace-nowrap border-b-2 transition-colors ${
+                  className={`shrink-0 min-w-[72px] sm:min-w-0 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 text-[10px] sm:text-sm whitespace-nowrap border-b-2 transition-colors ${
                     active
-                      ? "border-brand text-white font-medium"
+                      ? "border-brand text-white font-medium bg-white/5"
                       : "border-transparent text-white/70 hover:text-white hover:border-white/30"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.label}
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
-            <div className="flex-1" />
+            <div className="flex-1 min-w-1" />
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="md:hidden text-white/80 hover:text-white hover:bg-white/10 my-1"
+              aria-label="Sair"
+              className="md:hidden shrink-0 self-center text-white/80 hover:text-white hover:bg-white/10 mx-1 min-h-10 min-w-10"
             >
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </nav>
       </header>
-      <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 py-6">{children}</main>
-      <footer className="border-t border-border py-3 text-center text-xs text-muted-foreground">
+      <main className="flex-1 max-w-[1400px] w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">{children}</main>
+      <footer className="border-t border-border px-3 py-3 text-center text-[11px] sm:text-xs text-muted-foreground">
         Escola SESI Milton Sobrosa Cordeiro · Sistema de Notas CE 113
       </footer>
     </div>
