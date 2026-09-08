@@ -30,8 +30,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
-      <header className="bg-header text-header-foreground border-b border-white/10 sticky top-0 z-50 print:static">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden print:min-h-0 print:block print:overflow-visible">
+      <header className="bg-header text-header-foreground border-b border-white/10 sticky top-0 z-50 print:hidden">
         <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="bg-white rounded-md px-2 py-1.5 shrink-0">
@@ -105,8 +105,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       </header>
-      <main className="flex-1 max-w-[1400px] w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">{children}</main>
-      <footer className="border-t border-border px-3 py-3 text-center text-[11px] sm:text-xs text-muted-foreground">
+      <main className="flex-1 max-w-[1400px] w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 print:max-w-none print:w-full print:p-0 print:m-0">{children}</main>
+      <footer className="border-t border-border px-3 py-3 text-center text-[11px] sm:text-xs text-muted-foreground print:hidden">
         Escola SESI Milton Sobrosa Cordeiro · Sistema de Notas CE 113
       </footer>
     </div>
