@@ -10,7 +10,7 @@ import {
   SALAS, COMPONENTES_LABEL, STATUS_LABEL,
   gradeClass, statusBadgeClass, formatNota, formatFreq, type Etapa,
 } from "@/lib/sistema";
-import { Printer, RefreshCw, Map as MapIcon, IdCard, ArrowRight, User } from "lucide-react";
+import { Printer, RefreshCw, Map as MapIcon, IdCard, ArrowRight, User, Maximize2, Minimize2 } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/consulta")({
@@ -94,6 +94,7 @@ function ConsultaPage() {
   const [sala, setSala] = useState<string>("");
   const [alunoId, setAlunoId] = useState<string>("");
   const [etapa, setEtapa] = useState<Etapa>(1);
+  const [telaCheia, setTelaCheia] = useState(false);
 
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [aluno, setAluno] = useState<Aluno | null>(null);
@@ -114,12 +115,13 @@ function ConsultaPage() {
       setConfig((c.data ?? []) as ConfigSala[]);
       setAlunoId("");
       setAluno(null);
+      setTelaCheia(false);
       setLoadingAlunos(false);
     });
   }, [sala]);
 
   useEffect(() => {
-    if (!alunoId) { setAluno(null); setNotas([]); setFreq(null); return; }
+    if (!alunoId) { setAluno(null); setNotas([]); setFreq(null); setTelaCheia(false); return; }
     const a = alunos.find((x) => x.id === alunoId) ?? null;
     setAluno(a);
     setLoadingDetalhe(true);
@@ -132,6 +134,20 @@ function ConsultaPage() {
       setLoadingDetalhe(false);
     });
   }, [alunoId, alunos]);
+
+  useEffect(() => {
+    if (!telaCheia) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setTelaCheia(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [telaCheia]);
 
   const rows = useMemo(() => {
     const byComp = new Map(notas.map((n) => [n.componente, n] as const));
@@ -158,9 +174,9 @@ function ConsultaPage() {
   };
 
   return (
-    <div className="space-y-3 sm:space-y-4 print:space-y-2">
-      <Card>
-        <CardContent className="p-3 sm:p-4 grid gap-3 md:grid-cols-[1fr_2fr_1fr_auto] items-end print:hidden">
+    <div className="space-y-3 sm:space-y-4 print:space-y-0">
+      <Card className="print:hidden">
+        <CardContent className="p-3 sm:p-4 grid gap-3 md:grid-cols-[1fr_2fr_1fr_auto] items-end">
           <div className="min-w-0">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sala</label>
             <Select value={sala} onValueChange={setSala}>
@@ -199,7 +215,7 @@ function ConsultaPage() {
       </Card>
 
       {!aluno && (
-        <Card>
+        <Card className="print:hidden">
           <CardContent className="p-6 sm:p-10 text-center text-muted-foreground">
             <User className="h-10 w-10 mx-auto mb-2 opacity-30" />
             <p className="text-sm sm:text-base">Selecione uma sala e um aluno para visualizar a ficha individual.</p>
@@ -208,9 +224,15 @@ function ConsultaPage() {
       )}
 
       {aluno && (
-        <div className="grid gap-3 sm:gap-4 lg:grid-cols-[280px_1fr]">
-          <Card className="overflow-hidden">
-            <div className="aspect-[4/3] sm:aspect-[3/4] bg-muted relative">
+        <div
+          className={
+            telaCheia
+              ? "fixed inset-0 z-[100] bg-background p-3 sm:p-5 overflow-auto grid gap-3 sm:gap-4 lg:grid-cols-[280px_1fr] print:static print:z-auto print:p-0 print:overflow-visible print:grid-cols-[190px_1fr] print:gap-3"
+              : "grid gap-3 sm:gap-4 lg:grid-cols-[280px_1fr] print:grid-cols-[190px_1fr] print:gap-3 print:m-0"
+          }
+        >
+          <Card className="overflow-hidden print:shadow-none print:break-inside-avoid">
+            <div className="aspect-[4/3] sm:aspect-[3/4] bg-muted relative print:aspect-[3/4]">
               {aluno.foto_url ? (
                 <img src={aluno.foto_url} alt={aluno.nome} className="w-full h-full object-cover" />
               ) : (
@@ -219,7 +241,7 @@ function ConsultaPage() {
                 </div>
               )}
             </div>
-            <CardContent className="p-3 sm:p-4 space-y-2">
+            <CardContent className="p-3 sm:p-4 space-y-2 print:p-3">
               <h2 className="font-semibold text-base leading-tight">{aluno.nome}</h2>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant="outline">{aluno.sala}</Badge>
@@ -248,16 +270,20 @@ function ConsultaPage() {
                     <IdCard className="h-3.5 w-3.5 mr-1" />Carômetro
                   </Link>
                 </Button>
-                <Button variant="default" size="sm" className="sm:col-span-2" onClick={() => window.print()}>
+                <Button variant="outline" size="sm" onClick={() => setTelaCheia((v) => !v)}>
+                  {telaCheia ? <Minimize2 className="h-3.5 w-3.5 mr-1" /> : <Maximize2 className="h-3.5 w-3.5 mr-1" />}
+                  {telaCheia ? "Sair da tela cheia" : "Tela cheia"}
+                </Button>
+                <Button variant="default" size="sm" onClick={() => window.print()}>
                   <Printer className="h-3.5 w-3.5 mr-1" />Imprimir ficha
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="min-w-0">
+          <Card className="min-w-0 print:shadow-none print:break-inside-avoid">
             <CardContent className="p-0">
-              <div className="px-3 sm:px-4 py-3 border-b flex flex-wrap items-center justify-between gap-2 bg-secondary/40">
+              <div className="px-3 sm:px-4 py-3 border-b flex flex-wrap items-center justify-between gap-2 bg-secondary/40 print:px-3 print:py-2">
                 <h3 className="font-semibold text-sm sm:text-base">Notas por componente</h3>
                 <div className="flex items-center gap-3 text-xs">
                   <span className="text-muted-foreground">Fechamento: <strong className="text-foreground">Σ 21 pontos</strong></span>
@@ -273,19 +299,19 @@ function ConsultaPage() {
                 </div>
               ) : (
                 <>
-                  <div className="sm:hidden px-3 py-2 text-[11px] text-muted-foreground border-b bg-muted/20">
+                  <div className="sm:hidden px-3 py-2 text-[11px] text-muted-foreground border-b bg-muted/20 print:hidden">
                     Deslize a tabela para o lado para visualizar todas as etapas.
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[660px] text-sm">
+                  <div className="overflow-x-auto print:overflow-visible">
+                    <table className="w-full min-w-[660px] text-sm print:min-w-0 print:text-[11px]">
                       <thead>
                         <tr className="border-b bg-muted/40">
-                          <th className="text-left px-3 py-2 w-10">Nº</th>
-                          <th className="text-left px-3 py-2">Componente</th>
+                          <th className="text-left px-3 py-2 w-10 print:px-2 print:py-1.5">Nº</th>
+                          <th className="text-left px-3 py-2 print:px-2 print:py-1.5">Componente</th>
                           <EtapaTh n={1} active={etapa === 1} />
                           <EtapaTh n={2} active={etapa === 2} />
                           <EtapaTh n={3} active={etapa === 3} />
-                          <th className="text-center px-3 py-2 font-semibold whitespace-nowrap">Projeção</th>
+                          <th className="text-center px-3 py-2 font-semibold whitespace-nowrap print:px-2 print:py-1.5">Projeção</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -296,15 +322,15 @@ function ConsultaPage() {
                         )}
                         {rows.map((r) => (
                           <tr key={r.componente} className="border-b last:border-0 hover:bg-muted/30">
-                            <td className="px-3 py-2 text-muted-foreground">{r.idx}</td>
-                            <td className="px-3 py-2">
+                            <td className="px-3 py-2 text-muted-foreground print:px-2 print:py-1.5">{r.idx}</td>
+                            <td className="px-3 py-2 print:px-2 print:py-1.5">
                               <div className="font-medium">{r.componente}</div>
-                              <div className="text-xs text-muted-foreground">{COMPONENTES_LABEL[r.componente] ?? r.componente}</div>
+                              <div className="text-xs text-muted-foreground print:text-[9px]">{COMPONENTES_LABEL[r.componente] ?? r.componente}</div>
                             </td>
                             <NotaTd value={r.n1} active={etapa === 1} />
                             <NotaTd value={r.n2} active={etapa === 2} />
                             <NotaTd value={r.n3} active={etapa === 3} />
-                            <td className="px-3 py-2 text-center">
+                            <td className="px-3 py-2 text-center print:px-2 print:py-1.5">
                               <span
                                 className={`inline-block min-w-[3rem] px-2 py-1 rounded font-semibold ${projecaoClass(etapa, r.projecao.valor)}`}
                                 title={r.projecao.titulo}
@@ -332,7 +358,7 @@ function ConsultaPage() {
 
 function EtapaTh({ n, active }: { n: number; active: boolean }) {
   return (
-    <th className={`text-center px-3 py-2 ${active ? "bg-primary/10 text-primary font-bold border-x-2 border-primary/30" : ""}`}>
+    <th className={`text-center px-3 py-2 print:px-2 print:py-1.5 ${active ? "bg-primary/10 text-primary font-bold border-x-2 border-primary/30" : ""}`}>
       {active ? <>▼<br /></> : null}{n}ª Etapa
     </th>
   );
@@ -340,7 +366,7 @@ function EtapaTh({ n, active }: { n: number; active: boolean }) {
 
 function NotaTd({ value, active }: { value: number | null; active: boolean }) {
   return (
-    <td className={`px-3 py-2 text-center ${active ? "bg-primary/5 border-x-2 border-primary/30" : ""}`}>
+    <td className={`px-3 py-2 text-center print:px-2 print:py-1.5 ${active ? "bg-primary/5 border-x-2 border-primary/30" : ""}`}>
       <span className={`inline-block min-w-[3rem] px-2 py-1 rounded font-medium ${gradeClass(value)}`}>
         {formatNota(value)}
       </span>
