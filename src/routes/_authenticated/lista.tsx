@@ -33,12 +33,21 @@ export const Route = createFileRoute("/_authenticated/lista")({
 });
 
 const MEDIA_ESCOLAR = 7;
+const NOTAS_PAGE_SIZE = 1000;
 type Etapa = 1 | 2 | 3;
 
 interface NotaEtapas {
   n1: number | null;
   n2: number | null;
   n3: number | null;
+}
+
+interface NotaDb {
+  aluno_id: string;
+  componente: string;
+  nota_etapa_1: number | null;
+  nota_etapa_2: number | null;
+  nota_etapa_3: number | null;
 }
 
 interface Row {
@@ -65,6 +74,29 @@ function notaDaEtapa(row: Row, componente: string, etapa: Etapa): number | null 
   return nota.n3;
 }
 
+async function carregarTodasAsNotas(): Promise<NotaDb[]> {
+  const todas: NotaDb[] = [];
+  let inicio = 0;
+
+  while (true) {
+    const fim = inicio + NOTAS_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from("notas")
+      .select("aluno_id,componente,nota_etapa_1,nota_etapa_2,nota_etapa_3")
+      .range(inicio, fim);
+
+    if (error) throw error;
+
+    const pagina = (data ?? []) as NotaDb[];
+    todas.push(...pagina);
+
+    if (pagina.length < NOTAS_PAGE_SIZE) break;
+    inicio += NOTAS_PAGE_SIZE;
+  }
+
+  return todas;
+}
+
 function ListaPage() {
   const search = useSearch({ from: "/_authenticated/lista" });
   const [sala, setSala] = useState(search.sala);
@@ -77,45 +109,65 @@ function ListaPage() {
   const [configuracoes, setConfiguracoes] = useState<ConfigSala[]>([]);
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      supabase
-        .from("alunos")
-        .select("id,nome,sala,matricula,foto_url,status_aluno")
-        .order("sala")
-        .order("nome"),
-      supabase.from("notas").select("aluno_id,componente,nota_etapa_1,nota_etapa_2,nota_etapa_3"),
-      supabase.from("configuracoes_salas").select("sala,componente,ordem").order("ordem"),
-    ]).then(([a, n, c]) => {
-      const notasByAluno = new Map<string, Record<string, NotaEtapas>>();
-      for (const r of (n.data ?? []) as {
-        aluno_id: string;
-        componente: string;
-        nota_etapa_1: number | null;
-        nota_etapa_2: number | null;
-        nota_etapa_3: number | null;
-      }[]) {
-        const notas = notasByAluno.get(r.aluno_id) ?? {};
-        notas[r.componente] = {
-          n1: r.nota_etapa_1,
-          n2: r.nota_etapa_2,
-          n3: r.nota_etapa_3,
-        };
-        notasByAluno.set(r.aluno_id, notas);
+    let cancelado = false;
+
+    async function carregar() {
+      setLoading(true);
+
+      try {
+        const [a, notas, c] = await Promise.all([
+          supabase
+            .from("alunos")
+            .select("id,nome,sala,matricula,foto_url,status_aluno")
+            .order("sala")
+            .order("nome"),
+          carregarTodasAsNotas(),
+          supabase
+            .from("configuracoes_salas")
+            .select("sala,componente,ordem")
+            .order("ordem"),
+        ]);
+
+        if (cancelado) return;
+
+        const notasByAluno = new Map<string, Record<string, NotaEtapas>>();
+        for (const r of notas) {
+          const notasAluno = notasByAluno.get(r.aluno_id) ?? {};
+          notasAluno[r.componente] = {
+            n1: r.nota_etapa_1,
+            n2: r.nota_etapa_2,
+            n3: r.nota_etapa_3,
+          };
+          notasByAluno.set(r.aluno_id, notasAluno);
+        }
+
+        const lista: Row[] = (a.data ?? []).map((al) => ({
+          id: al.id,
+          nome: al.nome,
+          sala: al.sala,
+          matricula: al.matricula,
+          foto_url: al.foto_url,
+          status_aluno: al.status_aluno as Row["status_aluno"],
+          notas: notasByAluno.get(al.id) ?? {},
+        }));
+
+        setConfiguracoes((c.data ?? []) as ConfigSala[]);
+        setRows(lista);
+      } catch (error) {
+        console.error("Erro ao carregar a Lista Geral:", error);
+        if (!cancelado) {
+          setRows([]);
+          setConfiguracoes([]);
+        }
+      } finally {
+        if (!cancelado) setLoading(false);
       }
-      const rows: Row[] = (a.data ?? []).map((al) => ({
-        id: al.id,
-        nome: al.nome,
-        sala: al.sala,
-        matricula: al.matricula,
-        foto_url: al.foto_url,
-        status_aluno: al.status_aluno as Row["status_aluno"],
-        notas: notasByAluno.get(al.id) ?? {},
-      }));
-      setConfiguracoes((c.data ?? []) as ConfigSala[]);
-      setRows(rows);
-      setLoading(false);
-    });
+    }
+
+    void carregar();
+    return () => {
+      cancelado = true;
+    };
   }, []);
 
   const componentes = useMemo(() => {
@@ -308,7 +360,7 @@ function ListaPage() {
                       colSpan={3 + componentes.length}
                       className="text-center py-10 text-muted-foreground"
                     >
-                      Carregando...
+                      Carregando notas...
                     </td>
                   </tr>
                 )}
@@ -322,7 +374,7 @@ function ListaPage() {
                     </td>
                   </tr>
                 )}
-                {filtered.map((r) => (
+                {!loading && filtered.map((r) => (
                   <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30 group">
                     <td className="px-3 py-2 sticky left-0 z-10 bg-card group-hover:bg-muted">
                       <div className="flex items-center gap-2 min-w-[220px]">
