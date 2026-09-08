@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  SALAS, COMPONENTES_LABEL, STATUS_LABEL, projecao,
+  SALAS, COMPONENTES_LABEL, STATUS_LABEL,
   gradeClass, statusBadgeClass, formatNota, formatFreq, type Etapa,
 } from "@/lib/sistema";
 import { Printer, RefreshCw, Map as MapIcon, IdCard, ArrowRight, User } from "lucide-react";
@@ -17,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/consulta")({
   head: () => ({ meta: [{ title: "Consulta Individual — Sistema de Notas CE 113" }] }),
   component: ConsultaPage,
 });
+
+const SOMATORIA_FECHAMENTO = 21;
 
 interface Aluno {
   id: string;
@@ -29,6 +31,18 @@ interface Aluno {
 interface Nota { componente: string; nota_etapa_1: number | null; nota_etapa_2: number | null; nota_etapa_3: number | null; }
 interface Frequencia { freq1: number | null; freq2: number | null; freq3: number | null; }
 interface ConfigSala { componente: string; ordem: number; }
+
+function notaNecessariaTerceira(n1: number | null, n2: number | null): number | null {
+  if (n1 === null || n2 === null) return null;
+  return Math.max(0, SOMATORIA_FECHAMENTO - n1 - n2);
+}
+
+function necessariaClass(nota: number | null): string {
+  if (nota === null || Number.isNaN(nota)) return "bg-grade-empty text-muted-foreground";
+  if (nota <= 7) return "bg-grade-good text-emerald-900";
+  if (nota <= 10) return "bg-grade-warn text-amber-900";
+  return "bg-grade-bad text-red-900";
+}
 
 function ConsultaPage() {
   const navigate = useNavigate();
@@ -81,7 +95,14 @@ function ConsultaPage() {
       const n1 = n?.nota_etapa_1 ?? null;
       const n2 = n?.nota_etapa_2 ?? null;
       const n3 = n?.nota_etapa_3 ?? null;
-      return { idx: idx + 1, componente: c.componente, n1, n2, n3, proj: projecao(n1, n2, n3) };
+      return {
+        idx: idx + 1,
+        componente: c.componente,
+        n1,
+        n2,
+        n3,
+        necessaria3: notaNecessariaTerceira(n1, n2),
+      };
     });
   }, [config, notas]);
 
@@ -193,7 +214,8 @@ function ConsultaPage() {
             <CardContent className="p-0">
               <div className="px-3 sm:px-4 py-3 border-b flex flex-wrap items-center justify-between gap-2 bg-secondary/40">
                 <h3 className="font-semibold text-sm sm:text-base">Notas por componente</h3>
-                <div className="flex items-center gap-1 text-xs">
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-muted-foreground">Fechamento: <strong className="text-foreground">Σ 21 pontos</strong></span>
                   <span className="text-muted-foreground">Etapa atual:</span>
                   <span className="font-semibold text-primary flex items-center gap-1">
                     {etapa}ª <ArrowRight className="h-3 w-3" />
@@ -210,7 +232,7 @@ function ConsultaPage() {
                     Deslize a tabela para o lado para visualizar todas as etapas.
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[620px] text-sm">
+                    <table className="w-full min-w-[660px] text-sm">
                       <thead>
                         <tr className="border-b bg-muted/40">
                           <th className="text-left px-3 py-2 w-10">Nº</th>
@@ -218,7 +240,10 @@ function ConsultaPage() {
                           <EtapaTh n={1} active={etapa === 1} />
                           <EtapaTh n={2} active={etapa === 2} />
                           <EtapaTh n={3} active={etapa === 3} />
-                          <th className="text-center px-3 py-2 font-semibold">Projeção</th>
+                          <th className="text-center px-3 py-2 font-semibold whitespace-nowrap">
+                            Necessária 3ª
+                            <div className="text-[10px] font-normal text-muted-foreground">para Σ 21</div>
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -227,23 +252,30 @@ function ConsultaPage() {
                             Sem componentes configurados para esta sala.
                           </td></tr>
                         )}
-                        {rows.map((r) => (
-                          <tr key={r.componente} className="border-b last:border-0 hover:bg-muted/30">
-                            <td className="px-3 py-2 text-muted-foreground">{r.idx}</td>
-                            <td className="px-3 py-2">
-                              <div className="font-medium">{r.componente}</div>
-                              <div className="text-xs text-muted-foreground">{COMPONENTES_LABEL[r.componente] ?? r.componente}</div>
-                            </td>
-                            <NotaTd value={r.n1} active={etapa === 1} />
-                            <NotaTd value={r.n2} active={etapa === 2} />
-                            <NotaTd value={r.n3} active={etapa === 3} />
-                            <td className="px-3 py-2 text-center">
-                              <span className={`inline-block px-2 py-1 rounded font-semibold ${gradeClass(r.proj)}`}>
-                                {formatNota(r.proj)}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
+                        {rows.map((r) => {
+                          const impossivel = r.necessaria3 !== null && r.necessaria3 > 10;
+                          return (
+                            <tr key={r.componente} className="border-b last:border-0 hover:bg-muted/30">
+                              <td className="px-3 py-2 text-muted-foreground">{r.idx}</td>
+                              <td className="px-3 py-2">
+                                <div className="font-medium">{r.componente}</div>
+                                <div className="text-xs text-muted-foreground">{COMPONENTES_LABEL[r.componente] ?? r.componente}</div>
+                              </td>
+                              <NotaTd value={r.n1} active={etapa === 1} />
+                              <NotaTd value={r.n2} active={etapa === 2} />
+                              <NotaTd value={r.n3} active={etapa === 3} />
+                              <td className="px-3 py-2 text-center">
+                                <span
+                                  className={`inline-block min-w-[3rem] px-2 py-1 rounded font-semibold ${necessariaClass(r.necessaria3)}`}
+                                  title={impossivel ? "Necessária acima de 10,0: fechamento por 21 pontos não é alcançável apenas na 3ª etapa." : "Nota necessária na 3ª etapa para atingir 21 pontos no total."}
+                                >
+                                  {formatNota(r.necessaria3)}
+                                </span>
+                                {impossivel && <div className="text-[10px] text-red-700 mt-1 font-medium">acima de 10</div>}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
