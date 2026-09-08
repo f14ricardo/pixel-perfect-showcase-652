@@ -32,15 +32,60 @@ interface Nota { componente: string; nota_etapa_1: number | null; nota_etapa_2: 
 interface Frequencia { freq1: number | null; freq2: number | null; freq3: number | null; }
 interface ConfigSala { componente: string; ordem: number; }
 
-function notaNecessariaTerceira(n1: number | null, n2: number | null): number | null {
-  if (n1 === null || n2 === null) return null;
-  return Math.max(0, SOMATORIA_FECHAMENTO - n1 - n2);
+interface ProjecaoInfo {
+  valor: number | null;
+  impossivel: boolean;
+  titulo: string;
 }
 
-function necessariaClass(nota: number | null): string {
-  if (nota === null || Number.isNaN(nota)) return "bg-grade-empty text-muted-foreground";
-  if (nota <= 7) return "bg-grade-good text-emerald-900";
-  if (nota <= 10) return "bg-grade-warn text-amber-900";
+function projecaoPorEtapa(
+  etapa: Etapa,
+  n1: number | null,
+  n2: number | null,
+  n3: number | null,
+): ProjecaoInfo {
+  if (etapa === 1) {
+    if (n1 === null) {
+      return { valor: null, impossivel: false, titulo: "Informe a nota da 1ª etapa para calcular a projeção." };
+    }
+    const mediaRestante = Math.max(0, (SOMATORIA_FECHAMENTO - n1) / 2);
+    return {
+      valor: mediaRestante,
+      impossivel: mediaRestante > 10,
+      titulo: "Média necessária na 2ª e 3ª etapas para atingir 21 pontos no total.",
+    };
+  }
+
+  if (etapa === 2) {
+    if (n1 === null || n2 === null) {
+      return { valor: null, impossivel: false, titulo: "Informe as notas da 1ª e 2ª etapas para calcular a projeção." };
+    }
+    const necessaria3 = Math.max(0, SOMATORIA_FECHAMENTO - n1 - n2);
+    return {
+      valor: necessaria3,
+      impossivel: necessaria3 > 10,
+      titulo: "Nota necessária na 3ª etapa para atingir 21 pontos no total.",
+    };
+  }
+
+  if (n1 === null || n2 === null || n3 === null) {
+    return { valor: null, impossivel: false, titulo: "Informe as três etapas para calcular o fechamento final." };
+  }
+
+  return {
+    valor: (n1 + n2 + n3) / 3,
+    impossivel: false,
+    titulo: "Média final das três etapas. Fechamento adequado a partir de média 7,0 (21 pontos).",
+  };
+}
+
+function projecaoClass(etapa: Etapa, valor: number | null): string {
+  if (valor === null || Number.isNaN(valor)) return "bg-grade-empty text-muted-foreground";
+
+  if (etapa === 3) return gradeClass(valor);
+
+  if (valor <= 7) return "bg-grade-good text-emerald-900";
+  if (valor <= 10) return "bg-grade-warn text-amber-900";
   return "bg-grade-bad text-red-900";
 }
 
@@ -101,10 +146,10 @@ function ConsultaPage() {
         n1,
         n2,
         n3,
-        necessaria3: notaNecessariaTerceira(n1, n2),
+        projecao: projecaoPorEtapa(etapa, n1, n2, n3),
       };
     });
-  }, [config, notas]);
+  }, [config, notas, etapa]);
 
   const freqAtual = etapa === 1 ? freq?.freq1 : etapa === 2 ? freq?.freq2 : freq?.freq3;
 
@@ -240,10 +285,7 @@ function ConsultaPage() {
                           <EtapaTh n={1} active={etapa === 1} />
                           <EtapaTh n={2} active={etapa === 2} />
                           <EtapaTh n={3} active={etapa === 3} />
-                          <th className="text-center px-3 py-2 font-semibold whitespace-nowrap">
-                            Necessária 3ª
-                            <div className="text-[10px] font-normal text-muted-foreground">para Σ 21</div>
-                          </th>
+                          <th className="text-center px-3 py-2 font-semibold whitespace-nowrap">Projeção</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -252,30 +294,29 @@ function ConsultaPage() {
                             Sem componentes configurados para esta sala.
                           </td></tr>
                         )}
-                        {rows.map((r) => {
-                          const impossivel = r.necessaria3 !== null && r.necessaria3 > 10;
-                          return (
-                            <tr key={r.componente} className="border-b last:border-0 hover:bg-muted/30">
-                              <td className="px-3 py-2 text-muted-foreground">{r.idx}</td>
-                              <td className="px-3 py-2">
-                                <div className="font-medium">{r.componente}</div>
-                                <div className="text-xs text-muted-foreground">{COMPONENTES_LABEL[r.componente] ?? r.componente}</div>
-                              </td>
-                              <NotaTd value={r.n1} active={etapa === 1} />
-                              <NotaTd value={r.n2} active={etapa === 2} />
-                              <NotaTd value={r.n3} active={etapa === 3} />
-                              <td className="px-3 py-2 text-center">
-                                <span
-                                  className={`inline-block min-w-[3rem] px-2 py-1 rounded font-semibold ${necessariaClass(r.necessaria3)}`}
-                                  title={impossivel ? "Necessária acima de 10,0: fechamento por 21 pontos não é alcançável apenas na 3ª etapa." : "Nota necessária na 3ª etapa para atingir 21 pontos no total."}
-                                >
-                                  {formatNota(r.necessaria3)}
-                                </span>
-                                {impossivel && <div className="text-[10px] text-red-700 mt-1 font-medium">acima de 10</div>}
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        {rows.map((r) => (
+                          <tr key={r.componente} className="border-b last:border-0 hover:bg-muted/30">
+                            <td className="px-3 py-2 text-muted-foreground">{r.idx}</td>
+                            <td className="px-3 py-2">
+                              <div className="font-medium">{r.componente}</div>
+                              <div className="text-xs text-muted-foreground">{COMPONENTES_LABEL[r.componente] ?? r.componente}</div>
+                            </td>
+                            <NotaTd value={r.n1} active={etapa === 1} />
+                            <NotaTd value={r.n2} active={etapa === 2} />
+                            <NotaTd value={r.n3} active={etapa === 3} />
+                            <td className="px-3 py-2 text-center">
+                              <span
+                                className={`inline-block min-w-[3rem] px-2 py-1 rounded font-semibold ${projecaoClass(etapa, r.projecao.valor)}`}
+                                title={r.projecao.titulo}
+                              >
+                                {formatNota(r.projecao.valor)}
+                              </span>
+                              {r.projecao.impossivel && (
+                                <div className="text-[10px] text-red-700 mt-1 font-medium">acima de 10</div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
