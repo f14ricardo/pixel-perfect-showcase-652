@@ -102,21 +102,35 @@ function ConsultaPage() {
   const [notas, setNotas] = useState<Nota[]>([]);
   const [freq, setFreq] = useState<Frequencia | null>(null);
   const [config, setConfig] = useState<ConfigSala[]>([]);
+  const [componentesSala, setComponentesSala] = useState<string[]>([]);
   const [loadingAlunos, setLoadingAlunos] = useState(false);
   const [loadingDetalhe, setLoadingDetalhe] = useState(false);
 
   useEffect(() => {
-    if (!sala) { setAlunos([]); setAlunoId(""); return; }
+    if (!sala) { setAlunos([]); setAlunoId(""); setComponentesSala([]); return; }
     setLoadingAlunos(true);
     Promise.all([
       supabase.from("alunos").select("id,nome,sala,matricula,foto_url,status_aluno").eq("sala", sala).order("nome"),
       supabase.from("configuracoes_salas").select("componente,ordem").eq("sala", sala).order("ordem"),
-    ]).then(([a, c]) => {
-      setAlunos((a.data ?? []) as Aluno[]);
+    ]).then(async ([a, c]) => {
+      const listaAlunos = (a.data ?? []) as Aluno[];
+      setAlunos(listaAlunos);
       setConfig((c.data ?? []) as ConfigSala[]);
       setAlunoId("");
       setAluno(null);
       setTelaCheia(false);
+
+      // Componentes que fazem parte da matriz da turma segundo notas já
+      // lançadas para qualquer aluno da sala (ex.: PE sem linha de configuração).
+      if (listaAlunos.length) {
+        const { data: notasSala } = await supabase
+          .from("notas")
+          .select("componente")
+          .in("aluno_id", listaAlunos.map((x) => x.id));
+        setComponentesSala([...new Set((notasSala ?? []).map((n) => n.componente))]);
+      } else {
+        setComponentesSala([]);
+      }
       setLoadingAlunos(false);
     });
   }, [sala]);
@@ -153,11 +167,10 @@ function ConsultaPage() {
   const rows = useMemo(() => {
     const byComp = new Map(notas.map((n) => [n.componente, n] as const));
 
-    // Componentes configurados para a sala + componentes que já possuem notas
-    // lançadas para o aluno (ex.: PE) mesmo sem linha em configuracoes_salas.
+    // Matriz da turma: componentes configurados + componentes com notas na turma
+    // ou no aluno (ex.: PE), mesmo sem linha em configuracoes_salas.
     const configurados = config.map((c) => c.componente);
-    const extras = notas
-      .map((n) => n.componente)
+    const extras = [...componentesSala, ...notas.map((n) => n.componente)]
       .filter((comp, i, arr) => !configurados.includes(comp) && arr.indexOf(comp) === i)
       .sort((a, b) => (COMPONENTES_LABEL[a] ?? a).localeCompare(COMPONENTES_LABEL[b] ?? b, "pt-BR"));
 
@@ -165,6 +178,14 @@ function ConsultaPage() {
       ...config,
       ...extras.map((componente, i) => ({ componente, ordem: 10_000 + i })),
     ];
+
+    // PE deve aparecer logo após EF quando ambos fazem parte da matriz.
+    const iPE = lista.findIndex((c) => c.componente === "PE");
+    const iEF = lista.findIndex((c) => c.componente === "EF");
+    if (iPE > -1 && iEF > -1 && iPE !== iEF + 1) {
+      const [pe] = lista.splice(iPE, 1);
+      lista.splice(lista.findIndex((c) => c.componente === "EF") + 1, 0, pe!);
+    }
 
     return lista.map((c, idx) => {
       const n = byComp.get(c.componente);
@@ -180,7 +201,7 @@ function ConsultaPage() {
         projecao: projecaoPorEtapa(etapa, n1, n2, n3),
       };
     });
-  }, [config, notas, etapa]);
+  }, [config, componentesSala, notas, etapa]);
 
   const freqAtual = etapa === 1 ? freq?.freq1 : etapa === 2 ? freq?.freq2 : freq?.freq3;
 
