@@ -179,12 +179,13 @@ function ConsultaPage() {
       ...extras.map((componente, i) => ({ componente, ordem: 10_000 + i })),
     ];
 
-    // PE deve aparecer logo após EF quando ambos fazem parte da matriz.
-    const iPE = lista.findIndex((c) => c.componente === "PE");
+    // PE — Práticas Esportivas: linha fixa imediatamente após EF sempre que
+    // EF estiver na grade, independentemente de configuracoes_salas ou notas.
     const iEF = lista.findIndex((c) => c.componente === "EF");
-    if (iPE > -1 && iEF > -1 && iPE !== iEF + 1) {
-      const [pe] = lista.splice(iPE, 1);
-      lista.splice(lista.findIndex((c) => c.componente === "EF") + 1, 0, pe!);
+    if (iEF > -1) {
+      const iPE = lista.findIndex((c) => c.componente === "PE");
+      if (iPE > -1) lista.splice(iPE, 1);
+      lista.splice(lista.findIndex((c) => c.componente === "EF") + 1, 0, { componente: "PE", ordem: -1 });
     }
 
     return lista.map((c, idx) => {
