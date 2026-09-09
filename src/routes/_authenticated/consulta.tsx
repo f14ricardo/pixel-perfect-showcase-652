@@ -102,21 +102,35 @@ function ConsultaPage() {
   const [notas, setNotas] = useState<Nota[]>([]);
   const [freq, setFreq] = useState<Frequencia | null>(null);
   const [config, setConfig] = useState<ConfigSala[]>([]);
+  const [componentesSala, setComponentesSala] = useState<string[]>([]);
   const [loadingAlunos, setLoadingAlunos] = useState(false);
   const [loadingDetalhe, setLoadingDetalhe] = useState(false);
 
   useEffect(() => {
-    if (!sala) { setAlunos([]); setAlunoId(""); return; }
+    if (!sala) { setAlunos([]); setAlunoId(""); setComponentesSala([]); return; }
     setLoadingAlunos(true);
     Promise.all([
       supabase.from("alunos").select("id,nome,sala,matricula,foto_url,status_aluno").eq("sala", sala).order("nome"),
       supabase.from("configuracoes_salas").select("componente,ordem").eq("sala", sala).order("ordem"),
-    ]).then(([a, c]) => {
-      setAlunos((a.data ?? []) as Aluno[]);
+    ]).then(async ([a, c]) => {
+      const listaAlunos = (a.data ?? []) as Aluno[];
+      setAlunos(listaAlunos);
       setConfig((c.data ?? []) as ConfigSala[]);
       setAlunoId("");
       setAluno(null);
       setTelaCheia(false);
+
+      // Componentes que fazem parte da matriz da turma segundo notas já
+      // lançadas para qualquer aluno da sala (ex.: PE sem linha de configuração).
+      if (listaAlunos.length) {
+        const { data: notasSala } = await supabase
+          .from("notas")
+          .select("componente")
+          .in("aluno_id", listaAlunos.map((x) => x.id));
+        setComponentesSala([...new Set((notasSala ?? []).map((n) => n.componente))]);
+      } else {
+        setComponentesSala([]);
+      }
       setLoadingAlunos(false);
     });
   }, [sala]);
