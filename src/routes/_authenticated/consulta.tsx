@@ -152,7 +152,21 @@ function ConsultaPage() {
 
   const rows = useMemo(() => {
     const byComp = new Map(notas.map((n) => [n.componente, n] as const));
-    return config.map((c, idx) => {
+
+    // Componentes configurados para a sala + componentes que já possuem notas
+    // lançadas para o aluno (ex.: PE) mesmo sem linha em configuracoes_salas.
+    const configurados = config.map((c) => c.componente);
+    const extras = notas
+      .map((n) => n.componente)
+      .filter((comp, i, arr) => !configurados.includes(comp) && arr.indexOf(comp) === i)
+      .sort((a, b) => (COMPONENTES_LABEL[a] ?? a).localeCompare(COMPONENTES_LABEL[b] ?? b, "pt-BR"));
+
+    const lista: ConfigSala[] = [
+      ...config,
+      ...extras.map((componente, i) => ({ componente, ordem: 10_000 + i })),
+    ];
+
+    return lista.map((c, idx) => {
       const n = byComp.get(c.componente);
       const n1 = n?.nota_etapa_1 ?? null;
       const n2 = n?.nota_etapa_2 ?? null;
