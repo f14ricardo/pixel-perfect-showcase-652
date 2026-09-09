@@ -167,11 +167,10 @@ function ConsultaPage() {
   const rows = useMemo(() => {
     const byComp = new Map(notas.map((n) => [n.componente, n] as const));
 
-    // Componentes configurados para a sala + componentes que já possuem notas
-    // lançadas para o aluno (ex.: PE) mesmo sem linha em configuracoes_salas.
+    // Matriz da turma: componentes configurados + componentes com notas na turma
+    // ou no aluno (ex.: PE), mesmo sem linha em configuracoes_salas.
     const configurados = config.map((c) => c.componente);
-    const extras = notas
-      .map((n) => n.componente)
+    const extras = [...componentesSala, ...notas.map((n) => n.componente)]
       .filter((comp, i, arr) => !configurados.includes(comp) && arr.indexOf(comp) === i)
       .sort((a, b) => (COMPONENTES_LABEL[a] ?? a).localeCompare(COMPONENTES_LABEL[b] ?? b, "pt-BR"));
 
@@ -179,6 +178,14 @@ function ConsultaPage() {
       ...config,
       ...extras.map((componente, i) => ({ componente, ordem: 10_000 + i })),
     ];
+
+    // PE deve aparecer logo após EF quando ambos fazem parte da matriz.
+    const iPE = lista.findIndex((c) => c.componente === "PE");
+    const iEF = lista.findIndex((c) => c.componente === "EF");
+    if (iPE > -1 && iEF > -1 && iPE !== iEF + 1) {
+      const [pe] = lista.splice(iPE, 1);
+      lista.splice(lista.findIndex((c) => c.componente === "EF") + 1, 0, pe!);
+    }
 
     return lista.map((c, idx) => {
       const n = byComp.get(c.componente);
