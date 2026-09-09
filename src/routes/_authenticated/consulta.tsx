@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/consulta")({
 });
 
 const SOMATORIA_FECHAMENTO = 21;
+const META_APOS_DUAS_ETAPAS = 14;
 
 interface Aluno {
   id: string;
@@ -48,11 +49,11 @@ function projecaoPorEtapa(
     if (n1 === null) {
       return { valor: null, impossivel: false, titulo: "Informe a nota da 1ª etapa para calcular a projeção." };
     }
-    const mediaRestante = Math.max(0, (SOMATORIA_FECHAMENTO - n1) / 2);
+    const necessaria2 = Math.max(0, META_APOS_DUAS_ETAPAS - n1);
     return {
-      valor: mediaRestante,
-      impossivel: mediaRestante > 10,
-      titulo: "Média necessária na 2ª e 3ª etapas para atingir 21 pontos no total.",
+      valor: necessaria2,
+      impossivel: necessaria2 > 10,
+      titulo: "Nota necessária na 2ª etapa para atingir 14 pontos acumulados após duas etapas.",
     };
   }
 
