@@ -12,6 +12,7 @@ export const COMPONENTES_LABEL: Record<string, string> = {
   LP: "Língua Portuguesa",
   AR: "Arte",
   EF: "Educação Física",
+  PE: "Práticas Esportivas",
   LI: "Língua Inglesa",
   HI: "História",
   GE: "Geografia",
