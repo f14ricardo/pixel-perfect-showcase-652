@@ -201,7 +201,7 @@ function ConsultaPage() {
         projecao: projecaoPorEtapa(etapa, n1, n2, n3),
       };
     });
-  }, [config, notas, etapa]);
+  }, [config, componentesSala, notas, etapa]);
 
   const freqAtual = etapa === 1 ? freq?.freq1 : etapa === 2 ? freq?.freq2 : freq?.freq3;
 
