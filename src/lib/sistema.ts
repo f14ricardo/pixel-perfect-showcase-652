@@ -20,7 +20,7 @@ export const COMPONENTES_LABEL: Record<string, string> = {
   MTE: "Matemática (Estudo Técnico)",
   TPT: "Trabalho e Projeto de Vida",
   CN: "Ciências da Natureza",
-  PR: "Projeto Integrador",
+  PR: "Programação e Robótica",
   STE: "STEAM",
 };
 
