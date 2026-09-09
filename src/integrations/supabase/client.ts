@@ -3,6 +3,7 @@
 // environment variables cannot silently switch the app to another database.
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { brokeredPreviewStorage } from './previewAuthStorage';
 
 const SUPABASE_URL = 'https://ocvrdipmdibvsdidissl.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_IhBNQXeUxWFcg4ClE1xGUQ_lg1rNigF';
@@ -37,7 +38,7 @@ function createSupabaseClient() {
     },
     auth: {
       // Keep CE 113 authentication isolated from Lovable editor/preview auth.
-      storage: typeof window !== 'undefined' ? localStorage : undefined,
+      storage: brokeredPreviewStorage(),
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
